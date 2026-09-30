@@ -239,11 +239,11 @@ dependencies = [
  "chrono",
  "lumos",
  "lumos-cli",
+ "lumos-testing",
  "rusticate",
  "serde",
  "serde_json",
  "tokio",
- "tower",
  "validator",
 ]
 
@@ -1112,6 +1112,13 @@ dependencies = [
 [[package]]
 name = "lumos-testing"
 version = "0.1.0"
+dependencies = [
+ "lumos-core",
+ "rusticate",
+ "serde_json",
+ "tokio",
+ "tower",
+]
 
 [[package]]
 name = "matchers"

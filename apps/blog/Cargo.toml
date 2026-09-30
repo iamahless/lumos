@@ -21,4 +21,4 @@ validator = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
-tower = { workspace = true }
+lumos-testing = { version = "0.1.0", path = "../../crates/lumos-testing" }

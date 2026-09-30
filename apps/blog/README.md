@@ -40,4 +40,4 @@ curl -s -b jar -H 'Accept: application/vnd.api+json' \
 cargo test -p blog   # integration tour over an in-memory database
 ```
 
-`tests/http.rs` walks the whole product: login/logout, post CRUD, comment flow, validation 422s, 401/403 splits, negotiation 406/415s, id-mismatch 409s, filters, sorting, pagination, and fieldsets. New framework behavior should extend that tour, not live only in unit tests.
+`tests/http.rs` walks the whole product on `lumos-testing` (`TestDb` setup, `TestClient` with its cookie jar, chainable assertions): login/logout, post CRUD, comment flow, validation 422s, 401/403 splits, negotiation 406/415s, id-mismatch 409s, filters, sorting, pagination, and fieldsets. New framework behavior should extend that tour, not live only in unit tests.

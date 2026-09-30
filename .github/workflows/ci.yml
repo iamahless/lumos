@@ -82,6 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo test -p blog
+      - run: cargo test -p lumos-testing
       - run: cargo test -p rusticate --test orm
       - name: file-backed migrate/seed/route tour
         run: |

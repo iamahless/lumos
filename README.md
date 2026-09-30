@@ -2,7 +2,7 @@
 
 A lightweight, MVC, batteries-included Rust web framework with an Eloquent-inspired ORM. Minimal by default, feature-flag driven, and JSON:API-capable — built so a Laravel/Lumen developer feels at home while the framework stays idiomatic Rust: no runtime reflection, no global mutable state, all magic at compile time via proc-macros.
 
-> **Status: Phase 6 — example app.** On top of Phase 5: `apps/blog`, a runnable JSON:API blog (users/posts/comments) touring controllers, the ORM, migrations, seeders, validation, session auth, and JSON:API querying, with a 10-test HTTP integration suite. Building it fixed a real rusticate bug: `Model::create` read the new id on a separate pooled connection (single-connection memory DBs masked it). Testing helpers land in Phase 7.
+> **Status: Phase 7 — testing helpers.** On top of Phase 6: `lumos-testing` (`TestDb` with migrate/seed/reset, `TestClient` with a cookie jar, chainable `TestResponse` assertions, `factory!` re-export), and the blog suite ported onto it as proof.
 
 ## Quickstart
 
@@ -35,7 +35,7 @@ async fn main() -> lumos::Result<()> {
 | `lumos-macros`  | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`).  |
 | `rusticate`     | Standalone ORM. Never depends on `lumos-core`.                           |
 | `lumos-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`).       |
-| `lumos-testing` | Test helpers (Phase 7).                                                  |
+| `lumos-testing` | Test helpers: `TestDb`, `TestClient`, response assertions.               |
 | `lumos-cli`     | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed.   |
 
 Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
@@ -171,6 +171,34 @@ cargo test -p blog                   # integration tour (in-memory DB)
 ```
 
 Its `tests/http.rs` walks login/logout, CRUD, 422s, the 401/403 split, 406/415 negotiation, 409 id mismatch, filters, sorting, pagination, and fieldsets — extend that tour when adding framework behavior.
+
+## Testing
+
+```toml
+# Cargo.toml (dev-dependencies)
+lumos-testing = { version = "0.1" }
+```
+
+```rust
+use lumos_testing::{TestClient, TestDb};
+
+let db = TestDb::memory(&[&CreateUsers]).await?;
+db.seed(&[&DemoSeeder]).await?;
+let client = TestClient::new(app::build(db.db().clone())?.0);
+
+client.get("/health").await.assert_ok();
+client.post_json("/sessions", &login).await.assert_ok(); // jar keeps the cookie
+client
+    .post_vnd("/posts", &new_post)
+    .await
+    .assert_created()
+    .assert_data("posts", "1");
+
+db.reset(&["posts", "users"]).await?; // children first; sqlite ids restart
+```
+
+`factory!` (from rusticate, re-exported) builds deterministic fixtures
+with sequence numbers; see the `lumos-testing` crate docs.
 
 ## Why each core dependency exists
 

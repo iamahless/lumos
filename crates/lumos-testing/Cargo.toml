@@ -4,4 +4,13 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "Test helpers for Lumos applications: factories, DB reset, assertions"
+description = "Test helpers for Lumos applications: test DBs, HTTP client, response assertions"
+
+[dependencies]
+lumos-core.workspace = true
+rusticate.workspace = true
+serde_json.workspace = true
+tower.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
