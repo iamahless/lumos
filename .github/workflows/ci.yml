@@ -66,12 +66,15 @@ jobs:
               run: |
                   cargo run -p lumos-cli --bin lumos -- new skel --path /tmp/skel
                   python3 - "$GITHUB_WORKSPACE" <<'EOF'
+                  import re
                   import sys
                   root = sys.argv[1]
                   p = '/tmp/skel/Cargo.toml'
                   s = open(p).read()
-                  s = s.replace('lumos = "0.1.0"', f'lumos = {{ path = "{root}/crates/lumos" }}')
-                  s = s.replace('lumos-cli = "0.1.0"', f'lumos-cli = {{ path = "{root}/crates/lumos-cli" }}')
+                  s, lumos_count = re.subn(r'^lumos = "[^"]+"$', f'lumos = {{ path = "{root}/crates/lumos" }}', s, flags=re.MULTILINE)
+                  s, cli_count = re.subn(r'^lumos-cli = "[^"]+"$', f'lumos-cli = {{ path = "{root}/crates/lumos-cli" }}', s, flags=re.MULTILINE)
+                  if (lumos_count, cli_count) != (1, 1):
+                      raise SystemExit('generated Cargo.toml did not contain exactly one Lumos dependency pair')
                   open(p, 'w').write(s)
                   EOF
                   cd /tmp/skel && cargo check --all-targets

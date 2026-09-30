@@ -51,7 +51,7 @@ jobs:
                   test -n "$workspace_version"
                   test "$tag_version" = "$workspace_version"
 
-                  for crate in lumos-core lumos-macros rusticate lumos-jsonapi; do
+                  for crate in lumos lumos-core lumos-cli lumos-macros lumos-testing rusticate lumos-jsonapi; do
                     expected="${crate} = { version = \"${workspace_version}\", path ="
                     if ! grep -Fq "$expected" Cargo.toml; then
                       printf '%s v%s does not depend on %s v%s. Update the internal dependency version before tagging.\n' \

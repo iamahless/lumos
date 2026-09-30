@@ -7,6 +7,7 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 documentation = "https://docs.rs/lumos"
+readme = "README.md"
 description = "Lumos web framework: MVC, batteries-included, feature-flag driven"
 
 [features]

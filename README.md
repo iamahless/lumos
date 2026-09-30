@@ -50,6 +50,16 @@ The reference guide expands on this overview:
 
 The runnable [blog example](apps/blog/README.md) is the end-to-end reference application. Its HTTP test suite is the best source for concrete behavior at the protocol boundary.
 
+## Preparing a release
+
+Use the release helper to update the workspace package version and every internal crate constraint together:
+
+```sh
+scripts/prepare-release.sh 0.1.2
+```
+
+The script requires a clean worktree, updates `Cargo.toml` and `Cargo.lock`, validates the workspace, and prints the commit and tag commands. Review its changes before creating and pushing the release tag.
+
 ## Feature flags
 
 | Feature        | Default | Enables                                     |

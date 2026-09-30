@@ -7,6 +7,7 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 documentation = "https://docs.rs/lumos-jsonapi"
+readme = "README.md"
 description = "JSON:API v1.1 serialization and content negotiation for Lumos"
 
 [features]

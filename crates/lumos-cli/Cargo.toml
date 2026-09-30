@@ -7,6 +7,7 @@ license.workspace = true
 homepage.workspace = true
 repository.workspace = true
 documentation = "https://docs.rs/lumos-cli"
+readme = "README.md"
 description = "Artisan-like developer CLI for Lumos: generators, migrations, dev server"
 
 [[bin]]

@@ -12,9 +12,9 @@ name = "cli"
 path = "src/bin/cli.rs"
 
 [dependencies]
-lumos = { version = "0.1.0", path = "../../crates/lumos", features = ["orm", "migrations", "validation", "auth", "jsonapi"] }
-lumos-cli = { version = "0.1.0", path = "../../crates/lumos-cli" }
-rusticate = { version = "0.1.0", path = "../../crates/rusticate" }
+lumos = { workspace = true, features = ["orm", "migrations", "validation", "auth", "jsonapi"] }
+lumos-cli.workspace = true
+rusticate.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 serde = { workspace = true }
 chrono = { workspace = true }
@@ -22,4 +22,4 @@ validator = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
-lumos-testing = { version = "0.1.0", path = "../../crates/lumos-testing" }
+lumos-testing.workspace = true
