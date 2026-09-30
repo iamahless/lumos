@@ -9,6 +9,7 @@
 use lumos::rusticate::Model;
 use lumos::{JsonApiResource, NamedRelationship, Resource, ToOne, Validate};
 use serde::Deserialize;
+use std::collections::HashMap;
 
 use crate::models::{Comment, Post, User};
 
@@ -173,10 +174,12 @@ pub async fn render_posts(
     ids.sort_unstable();
     ids.dedup();
     let authors = User::query(db).where_in("id", ids).get().await?;
+    let authors_by_id: HashMap<i64, &User> =
+        authors.iter().map(|author| (author.id, author)).collect();
     Ok(posts
         .iter()
         .map(|post| {
-            let author = authors.iter().find(|user| user.id == post.user_id);
+            let author = authors_by_id.get(&post.user_id).copied();
             ApiPost::with_author(post, author)
         })
         .collect())

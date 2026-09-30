@@ -673,7 +673,7 @@ async fn migrations_track_batches_and_roll_back_in_order() -> Result<()> {
     // Second run applies only the pending migration, in a new batch.
     assert_eq!(migrator.run(all).await?.len(), 1);
     let status = migrator.status(all).await?;
-    assert!(status.iter().all(|entry| entry.ran));
+    assert!(status.iter().all(|entry| entry.ran()));
     assert_eq!(status[0].batch, Some(1));
     assert_eq!(status[1].batch, Some(2));
     assert!(migrator.run(all).await?.is_empty(), "idempotent");

@@ -811,12 +811,11 @@ pub trait Model: Sized + Send + Sync + 'static {
         let target = target.into();
         self.apply(&changeset)?;
         self.stamp_update();
-        let mut columns = changeset;
-        if let (Some(column), Some(stamp)) = (Self::updated_at_column(), self.updated_at_value()) {
-            columns.put(column, stamp);
-        }
         crate::observers::fire_saving(&target, self).await?;
         crate::observers::fire_updating(&target, self).await?;
+        // Hooks may normalize or enrich the instance. Persist that final
+        // authoritative state, matching `create` and `save`.
+        let columns = self.to_changeset()?;
         update_by_pk(
             &target,
             Self::table(),

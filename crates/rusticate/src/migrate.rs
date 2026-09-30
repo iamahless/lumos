@@ -1080,8 +1080,8 @@ pub trait Migration: Send + Sync {
 /// ```rust
 /// use rusticate::MigrationStatus;
 ///
-/// let status = MigrationStatus { name: "CreateUsers".to_string(), batch: Some(1), ran: true };
-/// assert!(status.ran);
+/// let status = MigrationStatus { name: "CreateUsers".to_string(), batch: Some(1) };
+/// assert!(status.ran());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MigrationStatus {
@@ -1089,8 +1089,13 @@ pub struct MigrationStatus {
     pub name: String,
     /// Batch number, when applied.
     pub batch: Option<i64>,
-    /// Whether it has run.
-    pub ran: bool,
+}
+
+impl MigrationStatus {
+    /// Whether this migration has been applied.
+    pub fn ran(&self) -> bool {
+        self.batch.is_some()
+    }
 }
 
 /// Runs migrations, tracking applied batches in a `migrations` table.
@@ -1362,9 +1367,9 @@ impl Migrator {
     /// let db = DB::memory().await?;
     /// let migrations: &[&dyn Migration] = &[&CreateUsers];
     /// let migrator = Migrator::new(&db);
-    /// assert!(!migrator.status(migrations).await?[0].ran);
+    /// assert!(!migrator.status(migrations).await?[0].ran());
     /// migrator.run(migrations).await?;
-    /// assert!(migrator.status(migrations).await?[0].ran);
+    /// assert!(migrator.status(migrations).await?[0].ran());
     /// # Ok(())
     /// # }
     /// ```
@@ -1378,7 +1383,6 @@ impl Migrator {
                 MigrationStatus {
                     name: migration.name(),
                     batch,
-                    ran: batch.is_some(),
                 }
             })
             .collect())

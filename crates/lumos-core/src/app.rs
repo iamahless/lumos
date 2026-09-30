@@ -26,7 +26,14 @@ pub struct Application {
     config: Config,
     router: Router,
     providers: Vec<Box<dyn ServiceProvider>>,
-    booted: bool,
+    lifecycle: Lifecycle,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Lifecycle {
+    Collecting,
+    Booting { next_provider: usize },
+    Booted,
 }
 
 impl Application {
@@ -47,7 +54,7 @@ impl Application {
             config,
             router: Router::new(),
             providers: Vec::new(),
-            booted: false,
+            lifecycle: Lifecycle::Collecting,
         }
     }
 
@@ -133,6 +140,11 @@ impl Application {
     where
         P: ServiceProvider + 'static,
     {
+        if self.lifecycle != Lifecycle::Collecting {
+            return Err(crate::AppError::internal(
+                "cannot register providers after application boot has begun",
+            ));
+        }
         provider.register(self)?;
         self.providers.push(Box::new(provider));
         Ok(())
@@ -173,13 +185,22 @@ impl Application {
     /// # }
     /// ```
     pub async fn boot(&mut self) -> Result<()> {
-        if self.booted {
+        if self.lifecycle == Lifecycle::Booted {
             return Ok(());
         }
-        for provider in &self.providers {
+        let mut next_provider = match self.lifecycle {
+            Lifecycle::Collecting => 0,
+            Lifecycle::Booting { next_provider } => next_provider,
+            Lifecycle::Booted => unreachable!(),
+        };
+        self.lifecycle = Lifecycle::Booting { next_provider };
+        while next_provider < self.providers.len() {
+            let provider = &self.providers[next_provider];
             provider.boot(self).await?;
+            next_provider += 1;
+            self.lifecycle = Lifecycle::Booting { next_provider };
         }
-        self.booted = true;
+        self.lifecycle = Lifecycle::Booted;
         Ok(())
     }
 
@@ -229,7 +250,7 @@ impl std::fmt::Debug for Application {
             .debug_struct("Application")
             .field("container", &self.container)
             .field("providers", &self.providers.len())
-            .field("booted", &self.booted)
+            .field("lifecycle", &self.lifecycle)
             .finish()
     }
 }

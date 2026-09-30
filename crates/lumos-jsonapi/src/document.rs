@@ -329,9 +329,9 @@ fn validate_path(
         // includes would silently under-deliver.
         let unloaded = match relation {
             Relationship::ToOne(target) => {
-                target.as_ref().is_some_and(|entry| entry.loaded.is_none())
+                target.as_ref().is_some_and(|entry| entry.loaded().is_none())
             }
-            Relationship::ToMany(entries) => entries.iter().any(|entry| entry.loaded.is_none()),
+            Relationship::ToMany(entries) => entries.iter().any(|entry| entry.loaded().is_none()),
         };
         if unloaded {
             return Err(AppError::bad_request(format!(
@@ -345,10 +345,10 @@ fn validate_path(
     let targets: Vec<&dyn DynResource> = match relation {
         Relationship::ToOne(target) => target
             .as_ref()
-            .and_then(|entry| entry.loaded)
+        .and_then(|entry| entry.loaded())
             .into_iter()
             .collect(),
-        Relationship::ToMany(entries) => entries.iter().filter_map(|entry| entry.loaded).collect(),
+        Relationship::ToMany(entries) => entries.iter().filter_map(|entry| entry.loaded()).collect(),
     };
     if targets.is_empty() {
         return Err(AppError::bad_request(format!(
@@ -491,10 +491,10 @@ fn relation_targets<'a>(relation: &Relationship<'a>) -> Vec<&'a dyn DynResource>
     match relation {
         Relationship::ToOne(target) => target
             .as_ref()
-            .and_then(|entry| entry.loaded)
+        .and_then(|entry| entry.loaded())
             .into_iter()
             .collect(),
-        Relationship::ToMany(entries) => entries.iter().filter_map(|entry| entry.loaded).collect(),
+        Relationship::ToMany(entries) => entries.iter().filter_map(|entry| entry.loaded()).collect(),
     }
 }
 
@@ -538,7 +538,7 @@ fn emit_included(
 
 /// Builds one linkage object (`{type, id}`).
 fn linkage_object(target: &crate::RelationTarget<'_>) -> Value {
-    serde_json::json!({"type": target.resource_type, "id": target.id})
+    serde_json::json!({"type": target.resource_type(), "id": target.id()})
 }
 
 #[cfg(test)]

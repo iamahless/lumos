@@ -85,8 +85,7 @@ impl TestClient {
             method: method.to_string(),
             uri: uri.to_string(),
             headers: Vec::new(),
-            body: Vec::new(),
-            error: None,
+            body: RequestBody::Empty,
         }
     }
 
@@ -272,8 +271,18 @@ pub struct TestRequest {
     method: String,
     uri: String,
     headers: Vec<(String, String)>,
-    body: Vec<u8>,
-    error: Option<String>,
+    body: RequestBody,
+}
+
+/// One mutually exclusive request-body representation.
+enum RequestBody {
+    Empty,
+    Encoded {
+        bytes: Vec<u8>,
+        content_type: &'static str,
+        accept: Option<&'static str>,
+    },
+    EncodeError(String),
 }
 
 impl TestRequest {
@@ -325,12 +334,14 @@ impl TestRequest {
     pub fn json(mut self, value: &impl lumos_core::serde::Serialize) -> Self {
         match serde_json::to_vec(value) {
             Ok(bytes) => {
-                self.headers
-                    .push(("content-type".to_string(), APPLICATION_JSON.to_string()));
-                self.body = bytes;
+                self.body = RequestBody::Encoded {
+                    bytes,
+                    content_type: APPLICATION_JSON,
+                    accept: None,
+                };
             }
             Err(error) => {
-                self.error = Some(format!("cannot serialize JSON body: {error}"));
+                self.body = RequestBody::EncodeError(format!("cannot serialize JSON body: {error}"));
             }
         }
         self
@@ -360,14 +371,14 @@ impl TestRequest {
     pub fn vnd(mut self, value: &impl lumos_core::serde::Serialize) -> Self {
         match serde_json::to_vec(value) {
             Ok(bytes) => {
-                self.headers
-                    .push(("accept".to_string(), VND_API_JSON.to_string()));
-                self.headers
-                    .push(("content-type".to_string(), VND_API_JSON.to_string()));
-                self.body = bytes;
+                self.body = RequestBody::Encoded {
+                    bytes,
+                    content_type: VND_API_JSON,
+                    accept: Some(VND_API_JSON),
+                };
             }
             Err(error) => {
-                self.error = Some(format!("cannot serialize JSON:API body: {error}"));
+                self.body = RequestBody::EncodeError(format!("cannot serialize JSON:API body: {error}"));
             }
         }
         self
@@ -391,11 +402,11 @@ impl TestRequest {
     /// # }
     /// ```
     pub async fn send(self, client: &TestClient) -> TestResponse {
-        assert!(
-            self.error.is_none(),
-            "{}",
-            self.error.as_deref().unwrap_or("invalid test request")
-        );
+        let (body, content_type, accept) = match self.body {
+            RequestBody::Empty => (Vec::new(), None, None),
+            RequestBody::Encoded { bytes, content_type, accept } => (bytes, Some(content_type), accept),
+            RequestBody::EncodeError(error) => panic!("{error}"),
+        };
         let method = self.method.parse::<Method>();
         assert!(
             method.is_ok(),
@@ -408,11 +419,17 @@ impl TestRequest {
         for (name, value) in &self.headers {
             builder = builder.header(name, value);
         }
+        if let Some(accept) = accept {
+            builder = builder.header("accept", accept);
+        }
+        if let Some(content_type) = content_type {
+            builder = builder.header("content-type", content_type);
+        }
         let jarred = render_cookies(&client.jar.borrow());
         if !jarred.is_empty() {
             builder = builder.header("cookie", jarred);
         }
-        let built = builder.body(Body::from(self.body));
+        let built = builder.body(Body::from(body));
         assert!(built.is_ok(), "invalid test request URI: {:?}", self.uri);
         // The assert guarantees `Ok`; the fallback only satisfies the type.
         let request = built.unwrap_or_else(|_| Request::new(Body::empty()));

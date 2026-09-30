@@ -38,8 +38,12 @@ type Factory = Arc<dyn Fn(&Container) -> Arc<dyn Any + Send + Sync> + Send + Syn
 /// ```
 #[derive(Default)]
 pub struct Container {
-    singletons: HashMap<TypeId, Arc<dyn Any + Send + Sync>>,
-    factories: HashMap<TypeId, Factory>,
+    bindings: HashMap<TypeId, Binding>,
+}
+
+enum Binding {
+    Singleton(Arc<dyn Any + Send + Sync>),
+    Factory(Factory),
 }
 
 impl Container {
@@ -75,8 +79,10 @@ impl Container {
     /// assert!(Arc::ptr_eq(&first, &second));
     /// ```
     pub fn singleton<T: Send + Sync + 'static>(&mut self, value: Arc<T>) -> &mut Self {
-        self.singletons
-            .insert(TypeId::of::<T>(), value as Arc<dyn Any + Send + Sync>);
+        self.bindings.insert(
+            TypeId::of::<T>(),
+            Binding::Singleton(value as Arc<dyn Any + Send + Sync>),
+        );
         self
     }
 
@@ -129,7 +135,7 @@ impl Container {
             let value: Arc<T> = factory(container);
             value as Arc<dyn Any + Send + Sync>
         });
-        self.factories.insert(TypeId::of::<T>(), erased);
+        self.bindings.insert(TypeId::of::<T>(), Binding::Factory(erased));
         self
     }
 
@@ -178,11 +184,11 @@ impl Container {
     /// ```
     pub fn resolve<T: Send + Sync + 'static>(&self) -> Result<Arc<T>> {
         let id = TypeId::of::<T>();
-        if let Some(stored) = self.singletons.get(&id) {
-            return downcast::<T>(Arc::clone(stored));
-        }
-        if let Some(factory) = self.factories.get(&id) {
-            return downcast::<T>(factory(self));
+        if let Some(binding) = self.bindings.get(&id) {
+            return match binding {
+                Binding::Singleton(stored) => downcast::<T>(Arc::clone(stored)),
+                Binding::Factory(factory) => downcast::<T>(factory(self)),
+            };
         }
         Err(AppError::internal(format!(
             "no binding registered for {}",
@@ -225,7 +231,7 @@ impl Container {
     /// ```
     pub fn has<T: 'static>(&self) -> bool {
         let id = TypeId::of::<T>();
-        self.singletons.contains_key(&id) || self.factories.contains_key(&id)
+        self.bindings.contains_key(&id)
     }
 }
 
@@ -233,8 +239,7 @@ impl std::fmt::Debug for Container {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
             .debug_struct("Container")
-            .field("singletons", &self.singletons.len())
-            .field("factories", &self.factories.len())
+            .field("bindings", &self.bindings.len())
             .finish()
     }
 }
@@ -273,12 +278,16 @@ mod tests {
     }
 
     #[test]
-    fn singleton_wins_over_factory_for_the_same_type() {
+    fn last_registration_replaces_the_previous_binding() {
         let mut container = Container::new();
         container.singleton_value(1u32);
         container.bind_value(|_| 2u32);
         let value: u32 = container.resolve_value().unwrap();
-        assert_eq!(value, 1);
+        assert_eq!(value, 2);
+
+        container.singleton_value(3u32);
+        let value: u32 = container.resolve_value().unwrap();
+        assert_eq!(value, 3);
     }
 
     #[test]
@@ -293,6 +302,6 @@ mod tests {
         let mut container = Container::new();
         container.singleton_value(1u8);
         let debug = format!("{container:?}");
-        assert!(debug.contains("singletons: 1"));
+        assert!(debug.contains("bindings: 1"));
     }
 }

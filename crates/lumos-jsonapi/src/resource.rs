@@ -248,26 +248,51 @@ pub enum Relationship<'a> {
 ///
 /// let author = ToOne::loaded(User { id: 7 });
 /// let target = author.as_target();
-/// assert_eq!(target.resource_type, "users");
-/// assert_eq!(target.id, "7");
-/// assert!(target.loaded.is_some());
+/// assert_eq!(target.resource_type(), "users");
+/// assert_eq!(target.id(), "7");
+/// assert!(target.loaded().is_some());
 /// ```
-pub struct RelationTarget<'a> {
+pub enum RelationTarget<'a> {
+    /// Linkage only; no resource was loaded for compound-document rendering.
+    Linkage { resource_type: &'static str, id: String },
+    /// A loaded resource, whose identity is authoritative for both linkage
+    /// and the compound `included` document.
+    Loaded(&'a dyn DynResource),
+}
+
+impl RelationTarget<'_> {
     /// JSON:API type of the target.
-    pub resource_type: &'static str,
+    pub fn resource_type(&self) -> &'static str {
+        match self {
+            Self::Linkage { resource_type, .. } => resource_type,
+            Self::Loaded(resource) => resource.resource_type(),
+        }
+    }
+
     /// JSON:API id of the target.
-    pub id: String,
-    /// Loaded target for `included` rendering, when the app provided it.
-    pub loaded: Option<&'a dyn DynResource>,
+    pub fn id(&self) -> String {
+        match self {
+            Self::Linkage { id, .. } => id.clone(),
+            Self::Loaded(resource) => resource.resource_id(),
+        }
+    }
+
+    /// Loaded target for `included` rendering, when available.
+    pub fn loaded(&self) -> Option<&dyn DynResource> {
+        match self {
+            Self::Linkage { .. } => None,
+            Self::Loaded(resource) => Some(*resource),
+        }
+    }
 }
 
 impl std::fmt::Debug for RelationTarget<'_> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
             .debug_struct("RelationTarget")
-            .field("resource_type", &self.resource_type)
-            .field("id", &self.id)
-            .field("loaded", &self.loaded.is_some())
+            .field("resource_type", &self.resource_type())
+            .field("id", &self.id())
+            .field("loaded", &self.loaded().is_some())
             .finish()
     }
 }
@@ -301,11 +326,11 @@ impl std::fmt::Debug for RelationTarget<'_> {
 /// }
 ///
 /// let linked = ToOne::<User>::id("7");
-/// assert_eq!(linked.as_target().id, "7");
-/// assert!(linked.as_target().loaded.is_none());
+/// assert_eq!(linked.as_target().id(), "7");
+/// assert!(linked.as_target().loaded().is_none());
 ///
 /// let loaded = ToOne::loaded(User { id: 7 });
-/// assert!(loaded.as_target().loaded.is_some());
+/// assert!(loaded.as_target().loaded().is_some());
 /// ```
 #[derive(Debug, Clone)]
 pub struct ToOne<T: Resource> {
@@ -336,7 +361,7 @@ impl<T: Resource> ToOne<T> {
     /// }
     ///
     /// let tag = ToOne::<Tag>::id("4");
-    /// assert_eq!(tag.as_target().resource_type, "tags");
+/// assert_eq!(tag.as_target().resource_type(), "tags");
     /// ```
     pub fn id(id: impl Into<String>) -> Self {
         Self {
@@ -369,7 +394,7 @@ impl<T: Resource> ToOne<T> {
     /// }
     ///
     /// let tag = ToOne::loaded(Tag { id: 4 });
-    /// assert_eq!(tag.as_target().id, "4");
+/// assert_eq!(tag.as_target().id(), "4");
     /// ```
     pub fn loaded(resource: T) -> Self {
         let id = resource.resource_id();
@@ -402,16 +427,15 @@ impl<T: Resource> ToOne<T> {
     ///
     /// let tag = ToOne::loaded(Tag);
     /// let target = tag.as_target();
-    /// assert_eq!((target.resource_type, target.id.as_str()), ("tags", "9"));
+/// assert_eq!((target.resource_type(), target.id().as_str()), ("tags", "9"));
     /// ```
     pub fn as_target(&self) -> RelationTarget<'_> {
-        RelationTarget {
-            resource_type: T::TYPE,
-            id: self.id.clone(),
-            loaded: self
-                .loaded
-                .as_ref()
-                .map(|resource| resource as &dyn DynResource),
+        match self.loaded.as_ref() {
+            Some(resource) => RelationTarget::Loaded(resource as &dyn DynResource),
+            None => RelationTarget::Linkage {
+                resource_type: T::TYPE,
+                id: self.id.clone(),
+            },
         }
     }
 }

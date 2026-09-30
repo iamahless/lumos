@@ -279,7 +279,7 @@ impl fmt::Display for StatusReport {
                 .batch
                 .map(|batch| batch.to_string())
                 .unwrap_or_else(|| "-".to_string());
-            let ran = if row.ran { "yes" } else { "no" };
+            let ran = if row.ran() { "yes" } else { "no" };
             writeln!(formatter, "{:<name_width$}  {batch:<5}  {ran}", row.name)?;
         }
         Ok(())
@@ -309,10 +309,10 @@ impl fmt::Display for StatusReport {
 /// # async fn main() -> rusticate::Result<()> {
 /// let db = DB::memory().await?;
 /// let before = migration_status(&db, &[&CreateUsers]).await?;
-/// assert!(!before.rows[0].ran);
+/// assert!(!before.rows[0].ran());
 /// migrate(&db, &[&CreateUsers]).await?;
 /// let after = migration_status(&db, &[&CreateUsers]).await?;
-/// assert!(after.rows[0].ran);
+/// assert!(after.rows[0].ran());
 /// # Ok(())
 /// # }
 /// ```
@@ -837,7 +837,7 @@ mod tests {
         let seeders: &[&dyn Seeder] = &[&AdminSeeder];
 
         let status = migration_status(&db, migrations).await.unwrap();
-        assert!(!status.rows[0].ran);
+        assert!(!status.rows[0].ran());
         assert!(status.to_string().contains("CreateUsers"));
 
         let migrated = migrate(&db, migrations).await.unwrap();
@@ -854,7 +854,7 @@ mod tests {
         let rolled = rollback_migrations(&db, migrations, 1).await.unwrap();
         assert_eq!(rolled.reverted.len(), 1);
         let status = migration_status(&db, migrations).await.unwrap();
-        assert!(!status.rows[0].ran);
+        assert!(!status.rows[0].ran());
     }
 
     #[tokio::test]

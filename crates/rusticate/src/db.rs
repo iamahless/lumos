@@ -181,7 +181,7 @@ impl Dialect {
 /// querying on the same transaction cannot deadlock.
 #[derive(Clone)]
 pub(crate) struct TxConn {
-    slot: Arc<tokio::sync::Mutex<Option<TxSlot>>>,
+    slot: Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, Any>>>>,
 }
 
 impl std::fmt::Debug for TxConn {
@@ -189,48 +189,12 @@ impl std::fmt::Debug for TxConn {
         let finished = self
             .slot
             .try_lock()
-            .map(|guard| guard.as_ref().map(|slot| slot.tx.is_none()).unwrap_or(true))
+            .map(|guard| guard.is_none())
             .unwrap_or(false);
         formatter
             .debug_struct("TxConn")
             .field("finished", &finished)
             .finish()
-    }
-}
-
-/// One open transaction: the sqlx transaction plus the pool clone backing it.
-///
-/// `sqlx::Transaction` borrows the pool it began from, so an owned handle
-/// needs a pool reference that outlives the `begin()` call. `pool` is a
-/// leaked `Box<AnyPool>` clone backing the `'static` borrow; it is reclaimed
-/// exactly once — when the slot is taken on commit/rollback (via [`Drop`]),
-/// or when the last handle to an abandoned transaction drops.
-pub(crate) struct TxSlot {
-    tx: Option<sqlx::Transaction<'static, Any>>,
-    pool: *mut Pool<Any>,
-}
-
-// SAFETY: the pool pointer is only dereferenced in `DB::begin` (before the
-// slot is shared) and in `Drop` through `&mut self` (exclusive). Every
-// cross-thread share goes through the mutex, so sending the slot across
-// threads cannot alias the pointee.
-unsafe impl Send for TxSlot {}
-
-impl Drop for TxSlot {
-    fn drop(&mut self) {
-        if self.pool.is_null() {
-            return;
-        }
-        // Drop the sqlx transaction first: an open transaction rolls back on
-        // drop (sqlx semantics), which must happen before its pool goes away.
-        self.tx = None;
-        // SAFETY: `pool` came from `Box::into_raw` in `DB::begin`, is only
-        // touched here, and is nulled immediately after reclaiming, so this
-        // `from_raw` runs exactly once per leaked box.
-        unsafe {
-            drop(Box::from_raw(self.pool));
-        }
-        self.pool = std::ptr::null_mut();
     }
 }
 
@@ -477,30 +441,13 @@ impl DB {
     /// # }
     /// ```
     pub async fn begin(&self) -> Result<Transaction> {
-        // The sqlx transaction borrows the pool it began from; a leaked clone
-        // backs that borrow (reclaimed on commit/rollback, or when the last
-        // handle drops — see `TxSlot`).
-        let pool = Box::into_raw(Box::new(self.pool.clone()));
-        // SAFETY: `pool` was just leaked from a live box and is non-null.
-        let begun = unsafe { &*pool }.begin().await;
-        match begun {
-            Ok(inner) => Ok(Transaction {
-                db: self.clone(),
-                conn: TxConn {
-                    slot: Arc::new(tokio::sync::Mutex::new(Some(TxSlot {
-                        tx: Some(inner),
-                        pool,
-                    }))),
-                },
-            }),
-            Err(error) => {
-                // SAFETY: same box as above; `begin` failed, so no slot owns it.
-                unsafe {
-                    drop(Box::from_raw(pool));
-                }
-                Err(Error::db(error))
-            }
-        }
+        let inner = self.pool.begin().await.map_err(Error::db)?;
+        Ok(Transaction {
+            db: self.clone(),
+            conn: TxConn {
+                slot: Arc::new(tokio::sync::Mutex::new(Some(inner))),
+            },
+        })
     }
 
     /// Runs `run` inside a transaction: commit on `Ok`, rollback on `Err`.
@@ -654,11 +601,7 @@ impl Transaction {
     /// # }
     /// ```
     pub async fn commit(&self) -> Result<()> {
-        let mut slot = self.take_slot().await?;
-        let inner = slot.tx.take().ok_or(Error::TransactionFinished)?;
-        let outcome = inner.commit().await.map_err(Error::db);
-        drop(slot);
-        outcome
+        self.take_slot().await?.commit().await.map_err(Error::db)
     }
 
     /// Rolls the transaction back. Exactly-once semantics mirror [`commit`](Transaction::commit).
@@ -677,11 +620,7 @@ impl Transaction {
     /// # }
     /// ```
     pub async fn rollback(&self) -> Result<()> {
-        let mut slot = self.take_slot().await?;
-        let inner = slot.tx.take().ok_or(Error::TransactionFinished)?;
-        let outcome = inner.rollback().await.map_err(Error::db);
-        drop(slot);
-        outcome
+        self.take_slot().await?.rollback().await.map_err(Error::db)
     }
 
     /// Returns `true` once committed or rolled back (non-blocking best
@@ -706,7 +645,7 @@ impl Transaction {
         self.conn
             .slot
             .try_lock()
-            .map(|guard| guard.as_ref().map(|slot| slot.tx.is_none()).unwrap_or(true))
+            .map(|guard| guard.is_none())
             .unwrap_or(false)
     }
 
@@ -753,7 +692,7 @@ impl Transaction {
 
     /// Takes the slot out exactly once (leaving `None` behind, so every later
     /// commit, rollback, or query fails with [`Error::TransactionFinished`]).
-    async fn take_slot(&self) -> Result<TxSlot> {
+    async fn take_slot(&self) -> Result<sqlx::Transaction<'static, Any>> {
         let mut guard = self.conn.slot.lock().await;
         guard.take().ok_or(Error::TransactionFinished)
     }
@@ -915,8 +854,7 @@ impl Target {
             None => bind_and_fetch(&self.db.pool, sql, binds).await,
             Some(conn) => {
                 let mut guard = conn.slot.lock().await;
-                let slot = guard.as_mut().ok_or(Error::TransactionFinished)?;
-                let tx = slot.tx.as_mut().ok_or(Error::TransactionFinished)?;
+                let tx = guard.as_mut().ok_or(Error::TransactionFinished)?;
                 let conn = &mut **tx;
                 bind_and_fetch(conn, sql, binds).await
             }
@@ -933,8 +871,7 @@ impl Target {
             None => bind_and_fetch_optional(&self.db.pool, sql, binds).await,
             Some(conn) => {
                 let mut guard = conn.slot.lock().await;
-                let slot = guard.as_mut().ok_or(Error::TransactionFinished)?;
-                let tx = slot.tx.as_mut().ok_or(Error::TransactionFinished)?;
+                let tx = guard.as_mut().ok_or(Error::TransactionFinished)?;
                 let conn = &mut **tx;
                 bind_and_fetch_optional(conn, sql, binds).await
             }
@@ -947,8 +884,7 @@ impl Target {
             None => bind_and_execute(&self.db.pool, sql, binds).await,
             Some(conn) => {
                 let mut guard = conn.slot.lock().await;
-                let slot = guard.as_mut().ok_or(Error::TransactionFinished)?;
-                let tx = slot.tx.as_mut().ok_or(Error::TransactionFinished)?;
+                let tx = guard.as_mut().ok_or(Error::TransactionFinished)?;
                 let conn = &mut **tx;
                 bind_and_execute(conn, sql, binds).await
             }
@@ -975,8 +911,7 @@ impl Target {
             }
             Some(conn) => {
                 let mut guard = conn.slot.lock().await;
-                let slot = guard.as_mut().ok_or(Error::TransactionFinished)?;
-                let tx = slot.tx.as_mut().ok_or(Error::TransactionFinished)?;
+                let tx = guard.as_mut().ok_or(Error::TransactionFinished)?;
                 let conn = &mut **tx;
                 bind_and_execute(&mut *conn, execute_sql, execute_binds).await?;
                 bind_and_fetch_optional(&mut *conn, fetch_sql, Vec::new()).await

@@ -299,7 +299,7 @@ fn render_object<T: Resource + ?Sized>(resource: &T) -> Result<Value> {
 
 /// Builds one linkage object (`{type, id}`).
 fn linkage_object(target: &crate::RelationTarget<'_>) -> Value {
-    serde_json::json!({"type": target.resource_type, "id": target.id})
+    serde_json::json!({"type": target.resource_type(), "id": target.id()})
 }
 
 #[cfg(test)]
@@ -329,10 +329,9 @@ mod tests {
         fn relationships(&self) -> Vec<NamedRelationship<'_>> {
             vec![NamedRelationship {
                 name: "author",
-                relation: Relationship::ToOne(Some(crate::resource::RelationTarget {
+                relation: Relationship::ToOne(Some(crate::resource::RelationTarget::Linkage {
                     resource_type: "authors",
                     id: self.author_id.clone(),
-                    loaded: None,
                 })),
             }]
         }
