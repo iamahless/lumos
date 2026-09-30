@@ -341,7 +341,8 @@ impl TestRequest {
                 };
             }
             Err(error) => {
-                self.body = RequestBody::EncodeError(format!("cannot serialize JSON body: {error}"));
+                self.body =
+                    RequestBody::EncodeError(format!("cannot serialize JSON body: {error}"));
             }
         }
         self
@@ -378,7 +379,8 @@ impl TestRequest {
                 };
             }
             Err(error) => {
-                self.body = RequestBody::EncodeError(format!("cannot serialize JSON:API body: {error}"));
+                self.body =
+                    RequestBody::EncodeError(format!("cannot serialize JSON:API body: {error}"));
             }
         }
         self
@@ -404,7 +406,11 @@ impl TestRequest {
     pub async fn send(self, client: &TestClient) -> TestResponse {
         let (body, content_type, accept) = match self.body {
             RequestBody::Empty => (Vec::new(), None, None),
-            RequestBody::Encoded { bytes, content_type, accept } => (bytes, Some(content_type), accept),
+            RequestBody::Encoded {
+                bytes,
+                content_type,
+                accept,
+            } => (bytes, Some(content_type), accept),
             RequestBody::EncodeError(error) => panic!("{error}"),
         };
         let method = self.method.parse::<Method>();

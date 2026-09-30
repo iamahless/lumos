@@ -328,9 +328,9 @@ fn validate_path(
         // Every target on a terminal path must be loaded: linkage-only
         // includes would silently under-deliver.
         let unloaded = match relation {
-            Relationship::ToOne(target) => {
-                target.as_ref().is_some_and(|entry| entry.loaded().is_none())
-            }
+            Relationship::ToOne(target) => target
+                .as_ref()
+                .is_some_and(|entry| entry.loaded().is_none()),
             Relationship::ToMany(entries) => entries.iter().any(|entry| entry.loaded().is_none()),
         };
         if unloaded {
@@ -345,10 +345,12 @@ fn validate_path(
     let targets: Vec<&dyn DynResource> = match relation {
         Relationship::ToOne(target) => target
             .as_ref()
-        .and_then(|entry| entry.loaded())
+            .and_then(|entry| entry.loaded())
             .into_iter()
             .collect(),
-        Relationship::ToMany(entries) => entries.iter().filter_map(|entry| entry.loaded()).collect(),
+        Relationship::ToMany(entries) => {
+            entries.iter().filter_map(|entry| entry.loaded()).collect()
+        }
     };
     if targets.is_empty() {
         return Err(AppError::bad_request(format!(
@@ -487,14 +489,16 @@ fn resolve_includes(
 
 /// Borrows the loaded targets of one relationship (validation guarantees
 /// non-emptiness wherever an include path needs them).
-fn relation_targets<'a>(relation: &Relationship<'a>) -> Vec<&'a dyn DynResource> {
+fn relation_targets<'a>(relation: &'a Relationship<'a>) -> Vec<&'a dyn DynResource> {
     match relation {
         Relationship::ToOne(target) => target
             .as_ref()
-        .and_then(|entry| entry.loaded())
+            .and_then(|entry| entry.loaded())
             .into_iter()
             .collect(),
-        Relationship::ToMany(entries) => entries.iter().filter_map(|entry| entry.loaded()).collect(),
+        Relationship::ToMany(entries) => {
+            entries.iter().filter_map(|entry| entry.loaded()).collect()
+        }
     }
 }
 

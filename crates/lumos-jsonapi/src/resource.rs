@@ -254,7 +254,12 @@ pub enum Relationship<'a> {
 /// ```
 pub enum RelationTarget<'a> {
     /// Linkage only; no resource was loaded for compound-document rendering.
-    Linkage { resource_type: &'static str, id: String },
+    Linkage {
+        /// JSON:API type of the target.
+        resource_type: &'static str,
+        /// JSON:API id of the target.
+        id: String,
+    },
     /// A loaded resource, whose identity is authoritative for both linkage
     /// and the compound `included` document.
     Loaded(&'a dyn DynResource),
@@ -361,7 +366,7 @@ impl<T: Resource> ToOne<T> {
     /// }
     ///
     /// let tag = ToOne::<Tag>::id("4");
-/// assert_eq!(tag.as_target().resource_type(), "tags");
+    /// assert_eq!(tag.as_target().resource_type(), "tags");
     /// ```
     pub fn id(id: impl Into<String>) -> Self {
         Self {
@@ -394,7 +399,7 @@ impl<T: Resource> ToOne<T> {
     /// }
     ///
     /// let tag = ToOne::loaded(Tag { id: 4 });
-/// assert_eq!(tag.as_target().id(), "4");
+    /// assert_eq!(tag.as_target().id(), "4");
     /// ```
     pub fn loaded(resource: T) -> Self {
         let id = resource.resource_id();
@@ -427,7 +432,7 @@ impl<T: Resource> ToOne<T> {
     ///
     /// let tag = ToOne::loaded(Tag);
     /// let target = tag.as_target();
-/// assert_eq!((target.resource_type(), target.id().as_str()), ("tags", "9"));
+    /// assert_eq!((target.resource_type(), target.id().as_str()), ("tags", "9"));
     /// ```
     pub fn as_target(&self) -> RelationTarget<'_> {
         match self.loaded.as_ref() {

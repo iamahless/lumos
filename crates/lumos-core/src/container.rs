@@ -135,7 +135,8 @@ impl Container {
             let value: Arc<T> = factory(container);
             value as Arc<dyn Any + Send + Sync>
         });
-        self.bindings.insert(TypeId::of::<T>(), Binding::Factory(erased));
+        self.bindings
+            .insert(TypeId::of::<T>(), Binding::Factory(erased));
         self
     }
 

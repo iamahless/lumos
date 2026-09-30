@@ -55,20 +55,74 @@ struct StampField {
     optional: bool,
 }
 
-/// A fully-resolved relation (after inference + overrides).
-struct Relation {
+/// Common resolved relation metadata.
+struct RelationBase {
     field: syn::Ident,
     name: String,
-    many: bool,
     target: Type,
-    /// Column on the child (HasMany) used for fetching/grouping.
-    fk_column: String,
-    /// Field read for the foreign key (child field for HasMany, own field for BelongsTo).
-    fk_field: syn::Ident,
-    /// Own field holding the local key (HasMany; always the PK field unless overridden).
-    local_field: syn::Ident,
-    /// `create_{relation}` method name (HasMany only).
-    create_ident: Option<syn::Ident>,
+}
+
+/// A fully-resolved relation (after inference + overrides).
+enum Relation {
+    HasMany {
+        base: RelationBase,
+        /// Column on the child (HasMany) used for fetching/grouping.
+        fk_column: String,
+        /// Field read for the foreign key (child field for HasMany, own field for BelongsTo).
+        fk_field: syn::Ident,
+        /// Own field holding the local key (HasMany; always the PK field unless overridden).
+        local_field: syn::Ident,
+        /// `create_{relation}` method name (HasMany only).
+        create_ident: syn::Ident,
+    },
+    BelongsTo {
+        base: RelationBase,
+        fk_column: String,
+        fk_field: syn::Ident,
+    },
+}
+
+impl Relation {
+    fn base(&self) -> &RelationBase {
+        match self {
+            Self::HasMany { base, .. } | Self::BelongsTo { base, .. } => base,
+        }
+    }
+
+    fn field(&self) -> &syn::Ident {
+        &self.base().field
+    }
+    fn name(&self) -> &str {
+        &self.base().name
+    }
+    fn target(&self) -> &Type {
+        &self.base().target
+    }
+    fn many(&self) -> bool {
+        matches!(self, Self::HasMany { .. })
+    }
+    fn fk_column(&self) -> &str {
+        match self {
+            Self::HasMany { fk_column, .. } | Self::BelongsTo { fk_column, .. } => fk_column,
+        }
+    }
+    fn fk_field(&self) -> &syn::Ident {
+        match self {
+            Self::HasMany { fk_field, .. } | Self::BelongsTo { fk_field, .. } => fk_field,
+        }
+    }
+    fn local_field(&self) -> Option<&syn::Ident> {
+        match self {
+            Self::HasMany { local_field, .. } => Some(local_field),
+            Self::BelongsTo { .. } => None,
+        }
+    }
+    fn create_ident(&self) -> Option<&syn::Ident> {
+        match self {
+            Self::HasMany { create_ident, .. } => Some(create_ident),
+            Self::BelongsTo { .. } => None,
+        }
+    }
 }
 
 pub(crate) fn expand(input: &DeriveInput) -> syn::Result<TokenStream2> {
@@ -283,15 +337,16 @@ pub(crate) fn expand(input: &DeriveInput) -> syn::Result<TokenStream2> {
                 None => pk_field.ident.clone(),
             };
             let create_ident = ident_parse(&format!("create_{}", field.ident), field.ident.span())?;
-            relations.push(Relation {
-                field: field.ident.clone(),
-                name: field.ident.to_string(),
-                many: true,
-                target,
+            relations.push(Relation::HasMany {
+                base: RelationBase {
+                    field: field.ident.clone(),
+                    name: field.ident.to_string(),
+                    target,
+                },
                 fk_column,
                 fk_field,
                 local_field,
-                create_ident: Some(create_ident),
+                create_ident,
             });
         } else {
             let fk_name = field
@@ -308,15 +363,14 @@ pub(crate) fn expand(input: &DeriveInput) -> syn::Result<TokenStream2> {
                     ),
                 ));
             }
-            relations.push(Relation {
-                field: field.ident.clone(),
-                name: field.ident.to_string(),
-                many: false,
-                target,
+            relations.push(Relation::BelongsTo {
+                base: RelationBase {
+                    field: field.ident.clone(),
+                    name: field.ident.to_string(),
+                    target,
+                },
                 fk_column: fk_name.clone(),
                 fk_field: ident_parse(&fk_name, field.ident.span())?,
-                local_field: pk_field.ident.clone(),
-                create_ident: None,
             });
         }
     }
@@ -402,7 +456,7 @@ fn emit(
         .collect();
     let relation_names: Vec<String> = relations
         .iter()
-        .map(|relation| relation.name.clone())
+        .map(|relation| relation.name().to_string())
         .collect();
     // Columns the `Any` driver cannot return natively (cast to text on read)
     // and boolean columns (cast to signed on MySQL): derived from field
@@ -638,9 +692,9 @@ fn emit(
     let to_value_relations: Vec<TokenStream2> = relations
         .iter()
         .map(|relation| {
-            let field = &relation.field;
-            let name = &relation.name;
-            if relation.many {
+            let field = relation.field();
+            let name = relation.name();
+            if relation.many() {
                 quote! {
                     if let Ok(items) = self.#field.get() {
                         let nested = items
@@ -689,13 +743,13 @@ fn emit(
     };
 
     let load_arms = relations.iter().map(|relation| {
-        let name = &relation.name;
-        let target = &relation.target;
-        if relation.many {
-            let field = &relation.field;
-            let fk_column = &relation.fk_column;
-            let fk_field = &relation.fk_field;
-            let local = &relation.local_field;
+        let name = relation.name();
+        let target = relation.target();
+        if relation.many() {
+            let field = relation.field();
+            let fk_column = relation.fk_column();
+            let fk_field = relation.fk_field();
+            let local = relation.local_field().expect("has-many relation");
             quote!(#name => {
                 let keys: Vec<#mp::BindValue> = models
                     .iter()
@@ -723,8 +777,8 @@ fn emit(
                 }
             })
         } else {
-            let field = &relation.field;
-            let fk_field = &relation.fk_field;
+            let field = relation.field();
+            let fk_field = relation.fk_field();
             quote!(#name => {
                 let keys: Vec<#mp::BindValue> = models
                     .iter()
@@ -788,12 +842,12 @@ fn emit(
     };
 
     let relation_methods = relations.iter().map(|relation| {
-        let field = &relation.field;
-        let target = &relation.target;
-        if relation.many {
-            let fk_column = &relation.fk_column;
-            let local = &relation.local_field;
-            let create_name = relation.create_ident.as_ref().unwrap_or(field);
+        let field = relation.field();
+        let target = relation.target();
+        if relation.many() {
+            let fk_column = relation.fk_column();
+            let local = relation.local_field().expect("has-many relation");
+            let create_name = relation.create_ident().expect("has-many relation");
             quote!(
                 /// Lazy to-many query, pre-filtered to this instance.
                 pub fn #field(&self, target: impl Into<#mp::Target>) -> #mp::Query<#target> {
@@ -812,7 +866,7 @@ fn emit(
                 }
             )
         } else {
-            let fk_field = &relation.fk_field;
+            let fk_field = relation.fk_field();
             quote!(
                 /// Lazy to-one query, pre-filtered to this instance's foreign key.
                 pub fn #field(&self, target: impl Into<#mp::Target>) -> #mp::Query<#target> {
