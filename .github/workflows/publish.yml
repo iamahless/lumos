@@ -92,10 +92,10 @@ jobs:
                   set -euo pipefail
                   test -n "$CARGO_REGISTRY_TOKEN"
 
-            - name: Publish workspace crates in dependency order
+            - name: Publish or resume workspace crates in dependency order
               shell: bash
               run: |
-                  set -euo pipefail
+                set -euo pipefail
 
                   packages=(
                     lumos-rs-macros
@@ -108,6 +108,31 @@ jobs:
                   )
 
                   for package in "${packages[@]}"; do
-                    cargo publish --locked --package "$package"
-                    echo "Published $package v$RELEASE_VERSION"
+                    if cargo info --registry crates-io "${package}@${RELEASE_VERSION}" >/dev/null 2>&1; then
+                      echo "$package v$RELEASE_VERSION is already published; skipping."
+                      continue
+                    fi
+
+                    for attempt in 1 2 3 4 5; do
+                      failure_log="$(mktemp)"
+                      if cargo publish --locked --package "$package" 2>&1 | tee "$failure_log"; then
+                        rm -f "$failure_log"
+                        echo "Published $package v$RELEASE_VERSION"
+                        break
+                      fi
+
+                      if ! grep -Fq "429 Too Many Requests" "$failure_log"; then
+                        rm -f "$failure_log"
+                        exit 1
+                      fi
+
+                      rm -f "$failure_log"
+                      if [[ "$attempt" -eq 5 ]]; then
+                        echo "crates.io rate limit persisted while publishing $package." >&2
+                        exit 1
+                      fi
+
+                      echo "crates.io rate limit reached; waiting 65 seconds before retrying $package."
+                      sleep 65
+                    done
                   done
