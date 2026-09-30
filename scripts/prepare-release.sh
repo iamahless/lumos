@@ -94,8 +94,8 @@ awk -v target_version="$target_version" -v package_list="${internal_packages[*]}
   }
 
   {
-    for (index = 1; index <= package_count; index += 1) {
-      package = packages[index]
+    for (package_index = 1; package_index <= package_count; package_index += 1) {
+      package = packages[package_index]
       pattern = "^" package "[[:space:]]*=[[:space:]]*\\{[[:space:]]*version[[:space:]]*="
       if ($0 ~ pattern) {
         sub(/version[[:space:]]*=[[:space:]]*"[^"]+"/, "version = \"" target_version "\"")
@@ -110,8 +110,8 @@ awk -v target_version="$target_version" -v package_list="${internal_packages[*]}
       exit 1
     }
 
-    for (index = 1; index <= package_count; index += 1) {
-      if (package_version_count[packages[index]] != 1) {
+    for (package_index = 1; package_index <= package_count; package_index += 1) {
+      if (package_version_count[packages[package_index]] != 1) {
         exit 1
       }
     }
