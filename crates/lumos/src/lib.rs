@@ -7,9 +7,9 @@
 //! |----------------|------------------------------------------------------|
 //! | `orm`          | Rusticate ORM (`rusticate` crate)                    |
 //! | `migrations`   | ORM migrations (implies `orm`)                       |
-//! | `validation`   | Form-request validation (Phase 3)                    |
-//! | `auth`         | Session + JWT + policies (Phase 3, implies `validation`) |
-//! | `views`        | Blade-like templates (Phase 3)                       |
+//! | `validation`   | `Validated` extractors + `Validate` derive (→ 422) |
+//! | `auth`         | Argon2 passwords, token sessions, guards (→ `validation`) |
+//! | `views`        | Askama templates via the `View` responder            |
 //! | `cache`        | Cache drivers                                        |
 //! | `queue`        | Queue drivers (v0.2)                                 |
 //! | `http-cache`   | ETag / cache-control middleware                      |
@@ -58,6 +58,16 @@ pub use lumos_macros::controller;
 // --- Opt-in features --------------------------------------------------------
 #[cfg(feature = "orm")]
 pub use rusticate;
+
+#[cfg(feature = "auth")]
+pub use lumos_core::{
+    clear_session_cookie, hash_password, login, logout, session_cookie, verify_password,
+    CurrentUser, MemorySessionStore, Session, SessionStore, SESSION_COOKIE,
+};
+#[cfg(feature = "validation")]
+pub use lumos_core::{field_errors, validate, Validate, Validated, ValidatedQuery};
+#[cfg(feature = "views")]
+pub use lumos_core::{Template, View};
 
 #[cfg(any(feature = "jsonapi", feature = "jsonapi-lite"))]
 pub use lumos_jsonapi;

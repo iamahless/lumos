@@ -12,7 +12,7 @@ members = [
 
 [workspace.package]
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.88"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
@@ -39,7 +39,7 @@ toml = "1"
 dotenvy = "0.15"
 # Zero-copy bodies (reserved for Phase 3+ extractors).
 bytes = "1"
-# ORM (rusticate only; sqlx 0.8 keeps the MSRV 1.75 story — 0.9 needs 1.94).
+# ORM (rusticate only; sqlx 0.9 needs Rust 1.94, above the 1.88 floor).
 # No default features: rusticate enables exactly the drivers it needs.
 sqlx = { version = "0.8", default-features = false }
 chrono = { version = "0.4", features = ["serde", "clock"] }
@@ -48,6 +48,12 @@ uuid = { version = "1", features = ["v4", "serde"] }
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"
+# Phase 3 (lumos-core only, all behind optional features).
+# argon2 re-exports the password-hash traits + RNG helpers it needs, so no
+# direct password-hash dep; session tokens use its OS-RNG helper too.
+validator = { version = "0.21", features = ["derive"] }
+argon2 = "0.6"
+askama = "0.16"
 
 # Internal crates.
 lumos-core = { version = "0.1.0", path = "crates/lumos-core" }

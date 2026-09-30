@@ -2,7 +2,7 @@
 
 A lightweight, MVC, batteries-included Rust web framework with an Eloquent-inspired ORM. Minimal by default, feature-flag driven, and JSON:API-capable — built so a Laravel/Lumen developer feels at home while the framework stays idiomatic Rust: no runtime reflection, no global mutable state, all magic at compile time via proc-macros.
 
-> **Status: Phase 2 — Rusticate ORM.** The standalone ORM is implemented and tested: `Model` derive, query builder, relations + eager loading, casts, scopes, observers, transactions, pagination, migrations, seeders, and factories over SQLite/Postgres/MySQL via sqlx's `Any` driver. Validation, auth, views, JSON:API, CLI, and the example app land in Phases 3–7.
+> **Status: Phase 3 — validation + auth + views.** On top of the Phase 2 Rusticate ORM: `Validated` request extractors (`validator` derive → `422` with per-field pointers), argon2 passwords + token sessions + the `CurrentUser` guard (`401`/`403` split), and Askama templates via the `View` responder — all in `lumos-core` behind `validation`/`auth`/`views`, re-exported from the facade. JSON:API, CLI, and the example app land in Phases 4–7.
 
 ## Quickstart
 
@@ -49,9 +49,9 @@ Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
 | *(core)*       | yes     | Routing, request/response, error handling    |
 | `orm`          | no      | Rusticate ORM                                |
 | `migrations`   | no      | ORM migrations (implies `orm`)               |
-| `validation`   | no      | Form-request validation (Phase 3)            |
-| `auth`         | no      | Session + JWT + policies (Phase 3)           |
-| `views`        | no      | Blade-like templates (Phase 3)               |
+| `validation`   | no      | `Validated` extractors + `Validate` (→ 422)  |
+| `auth`         | no      | Argon2, sessions, guards (→ `validation`)   |
+| `views`        | no      | Askama templates via `View`                  |
 | `cache`        | no      | Cache drivers                                |
 | `queue`        | no      | Queue drivers (v0.2)                         |
 | `http-cache`   | no      | ETag / cache-control middleware              |
@@ -134,7 +134,7 @@ docs for the full tour.
 
 ## Why each core dependency exists
 
-`lumos-core` holds 12 of its 15-dependency budget (13 with `orm`):
+`lumos-core` holds 11 required dependencies (≤ 15 budget); each flag below adds its own:
 
 | Dependency            | Why                                                                                       |
 | --------------------- | ----------------------------------------------------------------------------------------- |
@@ -146,15 +146,19 @@ docs for the full tour.
 | tracing               | Backend for the `Log` facade.                                                             |
 | tracing-subscriber    | Default `fmt` + `RUST_LOG` subscriber, installed by `Log::init`.                          |
 | tower                 | `Service`/`Layer` traits for middleware composition.                                      |
-| async-trait           | Object-safe async `ServiceProvider::boot` (MSRV 1.75 lacks async `dyn`).                  |
+| async-trait           | Object-safe async traits (`ServiceProvider`, `SessionStore`).                             |
 | toml                  | `config/*.toml` parsing.                                                                  |
 | dotenvy               | `.env` loading.                                                                           |
 | tower-http (optional) | ETag / cache-control middleware behind `http-cache`; zero cost when off.                  |
 | rusticate (optional)  | ORM error mapping behind `orm`; zero cost when off.                                       |
+| validator (optional)  | `Validate` derive behind `validation`; zero cost when off.                                |
+| argon2 (optional)     | Password hashing + session RNG behind `auth`; zero cost when off.                         |
+| askama (optional)     | Compile-time templates behind `views`; zero cost when off.                                |
 
 Deliberately absent: `hyper`/`matchit` (via axum), `sqlx` (`rusticate`
-only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only), `mime` +
-`bytes` (added when negotiation/extractors need them in Phase 3–4).
+only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only),
+`password-hash`/`getrandom` (via argon2's re-exports), `cookie`
+(hand-rolled parsing), `mime` + `bytes` (Phase 4 negotiation).
 
 ## Contracts
 
@@ -186,4 +190,4 @@ done
 cargo check -p lumos --features jsonapi,jsonapi-lite
 ```
 
-MSRV 1.75. License: MIT OR Apache-2.0.
+MSRV 1.88. License: MIT OR Apache-2.0.

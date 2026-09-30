@@ -9,10 +9,10 @@ description = "Lumos kernel: routing, HTTP primitives, service container, config
 [features]
 default = []
 orm = ["dep:rusticate"]
-# Pure flags in Phase 1 (wiring only; modules land in the noted phase).
-validation = []          # Phase 3
-auth = ["validation"]    # Phase 3
-views = []               # Phase 3
+validation = ["dep:validator"]
+auth = ["validation", "dep:argon2"]
+views = ["dep:askama"]
+# Pure flags (wiring only; modules land in the noted phase).
 cache = []               # Phase 3+
 queue = []               # v0.2
 jsonapi = []             # Phase 4
@@ -33,3 +33,6 @@ toml.workspace = true
 dotenvy.workspace = true
 tower-http = { workspace = true, optional = true }
 rusticate = { workspace = true, optional = true }
+validator = { workspace = true, optional = true }
+argon2 = { workspace = true, optional = true }
+askama = { workspace = true, optional = true }
