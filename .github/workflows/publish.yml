@@ -4,6 +4,12 @@ on:
     push:
         tags:
             - "v*"
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Release version to publish, without the v prefix"
+                required: true
+                type: string
 
 permissions:
     contents: read
@@ -22,12 +28,16 @@ jobs:
             version: ${{ steps.version.outputs.value }}
         steps:
             - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.sha }}
 
             - id: version
               shell: bash
+              env:
+                  RELEASE_VERSION_INPUT: ${{ inputs.version }}
               run: |
                   set -euo pipefail
-                  tag_version="${GITHUB_REF_NAME#v}"
+                  tag_version="${RELEASE_VERSION_INPUT:-${GITHUB_REF_NAME#v}}"
                   workspace_version="$(awk '
                     /^\[workspace\.package\]$/ { in_workspace_package = 1; next }
                     /^\[/ { in_workspace_package = 0 }
@@ -64,6 +74,8 @@ jobs:
             RELEASE_VERSION: ${{ needs.validate-release.outputs.version }}
         steps:
             - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.sha }}
 
             - name: Confirm crates.io credentials are configured
               shell: bash
@@ -86,7 +98,7 @@ jobs:
                     lumos
                   )
 
-          for package in "${packages[@]}"; do
-            cargo publish --locked --package "$package"
-            echo "Published $package v$RELEASE_VERSION"
-          done
+                  for package in "${packages[@]}"; do
+                    cargo publish --locked --package "$package"
+                    echo "Published $package v$RELEASE_VERSION"
+                  done
