@@ -1,132 +1,132 @@
 name: ci
 
 on:
-  push:
-  pull_request:
+    push:
+    pull_request:
 
 env:
-  CARGO_TERM_COLOR: always
+    CARGO_TERM_COLOR: always
 
 jobs:
-  fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo fmt --all -- --check
+    fmt:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo fmt --all -- --check
 
-  clippy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo clippy -p lumos-core --features validation,auth,views --all-targets -- -D warnings
-      - run: cargo clippy -p lumos --features validation,auth,views,orm --all-targets -- -D warnings
-      - run: cargo clippy -p lumos-jsonapi --features jsonapi --all-targets -- -D warnings
-      - run: cargo clippy -p lumos-jsonapi --features jsonapi-lite --all-targets -- -D warnings
-      - run: cargo clippy -p lumos --features jsonapi --all-targets -- -D warnings
-      - run: cargo clippy -p lumos --features jsonapi-lite --all-targets -- -D warnings
+    clippy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo clippy --workspace --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-core --features validation,auth,views --all-targets -- -D warnings
+            - run: cargo clippy -p lumos --features validation,auth,views,orm --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-jsonapi --features jsonapi --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-jsonapi --features jsonapi-lite --all-targets -- -D warnings
+            - run: cargo clippy -p lumos --features jsonapi --all-targets -- -D warnings
+            - run: cargo clippy -p lumos --features jsonapi-lite --all-targets -- -D warnings
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test --workspace
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo test --workspace
 
-  orm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test -p rusticate
-      - run: cargo test -p lumos --features orm
-      - run: cargo test -p lumos-core --features orm
+    orm:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo test -p rusticate
+            - run: cargo test -p lumos --features orm
+            - run: cargo test -p lumos-core --features orm
 
-  phase3:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test -p lumos-core --features validation,auth,views
-      - run: cargo test -p lumos --features auth,views
+    phase3:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo test -p lumos-core --features validation,auth,views
+            - run: cargo test -p lumos --features auth,views
 
-  jsonapi:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test -p lumos-jsonapi --features jsonapi
-      - run: cargo test -p lumos-jsonapi --features jsonapi-lite
-      - run: cargo test -p lumos --features jsonapi
-      - run: cargo test -p lumos --features jsonapi-lite --test jsonapi_path
+    jsonapi:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo test -p lumos-jsonapi --features jsonapi
+            - run: cargo test -p lumos-jsonapi --features jsonapi-lite
+            - run: cargo test -p lumos --features jsonapi
+            - run: cargo test -p lumos --features jsonapi-lite --test jsonapi_path
 
-  cli:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test -p lumos-cli
-      - run: cargo run -p lumos-cli --bin lumos -- --help
-      - name: generated skeleton compiles and lists routes
-        run: |
-          cargo run -p lumos-cli --bin lumos -- new skel --path /tmp/skel
-          python3 - "$GITHUB_WORKSPACE" <<'EOF'
-          import sys
-          root = sys.argv[1]
-          p = '/tmp/skel/Cargo.toml'
-          s = open(p).read()
-          s = s.replace('lumos = "0.1.0"', f'lumos = {{ path = "{root}/crates/lumos" }}')
-          s = s.replace('lumos-cli = "0.1.0"', f'lumos-cli = {{ path = "{root}/crates/lumos-cli" }}')
-          open(p, 'w').write(s)
-          EOF
-          cd /tmp/skel && cargo check --all-targets
-          cargo run -q --bin cli -- route:list
+    cli:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo test -p lumos-cli
+            - run: cargo run -p lumos-cli --bin lumos -- --help
+            - name: generated skeleton compiles and lists routes
+              run: |
+                  cargo run -p lumos-cli --bin lumos -- new skel --path /tmp/skel
+                  python3 - "$GITHUB_WORKSPACE" <<'EOF'
+                  import sys
+                  root = sys.argv[1]
+                  p = '/tmp/skel/Cargo.toml'
+                  s = open(p).read()
+                  s = s.replace('lumos = "0.1.0"', f'lumos = {{ path = "{root}/crates/lumos" }}')
+                  s = s.replace('lumos-cli = "0.1.0"', f'lumos-cli = {{ path = "{root}/crates/lumos-cli" }}')
+                  open(p, 'w').write(s)
+                  EOF
+                  cd /tmp/skel && cargo check --all-targets
+                  cargo run -q --bin cli -- route:list
 
-  blog:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test -p blog
-      - run: cargo test -p lumos-testing
-      - run: cargo test -p rusticate --test orm
-      - name: file-backed migrate/seed/route tour
-        run: |
-          cd apps/blog
-          export DATABASE_URL='sqlite:/tmp/blog.db?mode=rwc'
-          rm -f /tmp/blog.db
-          cargo run -q -p blog --bin cli -- migrate
-          cargo run -q -p blog --bin cli -- db:seed
-          cargo run -q -p blog --bin cli -- route:list
+    blog:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo test -p blog
+            - run: cargo test -p lumos-testing
+            - run: cargo test -p rusticate --test orm
+            - name: file-backed migrate/seed/route tour
+              run: |
+                  cd apps/blog
+                  export DATABASE_URL='sqlite:/tmp/blog.db?mode=rwc'
+                  rm -f /tmp/blog.db
+                  cargo run -q -p blog --bin cli -- migrate
+                  cargo run -q -p blog --bin cli -- db:seed
+                  cargo run -q -p blog --bin cli -- route:list
 
-  features:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        features:
-          - orm
-          - migrations
-          - validation
-          - auth
-          - views
-          - cache
-          - queue
-          - http-cache
-          - jsonapi
-          - jsonapi-lite
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo check -p lumos --no-default-features --features ${{ matrix.features }}
+    features:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                features:
+                    - orm
+                    - migrations
+                    - validation
+                    - auth
+                    - views
+                    - cache
+                    - queue
+                    - http-cache
+                    - jsonapi
+                    - jsonapi-lite
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo check -p lumos --no-default-features --features ${{ matrix.features }}
 
-  all-safe:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo check -p lumos --features orm,migrations,validation,auth,views,cache,queue,http-cache,jsonapi
+    all-safe:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - run: cargo check -p lumos --features orm,migrations,validation,auth,views,cache,queue,http-cache,jsonapi
 
-  exclusivity:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: jsonapi + jsonapi-lite must refuse to compile
-        run: |
-          if cargo check -p lumos --features jsonapi,jsonapi-lite 2>&1 | grep -q "mutually exclusive"; then
-            echo "guard fires as designed"
-          else
-            echo "exclusivity guard did not fire"
-            exit 1
-          fi
+    exclusivity:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - name: jsonapi + jsonapi-lite must refuse to compile
+              run: |
+                  if cargo check -p lumos --features jsonapi,jsonapi-lite 2>&1 | grep -q "mutually exclusive"; then
+                    echo "guard fires as designed"
+                  else
+                    echo "exclusivity guard did not fire"
+                    exit 1
+                  fi
