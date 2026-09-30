@@ -9,7 +9,7 @@ Lumos is an MVC Rust web framework with an Eloquent-inspired ORM. It is minimal 
 ```toml
 # Cargo.toml
 [dependencies]
-lumos = { version = "0.1", default-features = false }
+lumos = { package = "lumos-rs", version = "0.1", default-features = false }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
@@ -31,14 +31,16 @@ async fn main() -> lumos::Result<()> {
 | Crate           | Role                                                                     |
 | --------------- | ------------------------------------------------------------------------ |
 | `lumos`         | Facade: feature flags + curated re-exports. This is what apps depend on. |
-| `lumos-core`    | Kernel: router, HTTP, container, config, errors, middleware, providers.  |
-| `lumos-macros`  | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`).  |
-| `rusticate`     | Standalone ORM. Never depends on `lumos-core`.                           |
-| `lumos-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`).       |
-| `lumos-testing` | Test helpers: `TestDb`, `TestClient`, response assertions.               |
-| `lumos-cli`     | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed.   |
+| `lumos-rs-core` | Kernel: router, HTTP, container, config, errors, middleware, providers. |
+| `lumos-rs-macros` | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`). |
+| `lumos-rs-rusticate` | Standalone ORM. Never depends on `lumos-core`. |
+| `lumos-rs-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`). |
+| `lumos-rs-testing` | Test helpers: `TestDb`, `TestClient`, response assertions. |
+| `lumos-rs-cli` | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed. |
 
 Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`; `lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred: sort/filter are structured values apps map onto queries themselves); `lumos-cli` → `{lumos-core, rusticate}` (runtime glue; the parser and generators are dependency-free); `lumos-core` → nothing internal; `rusticate` → nothing internal.
+
+The crates.io packages use the `lumos-rs-*` names. They retain their short Rust library names, so applications install `lumos-rs` as the `lumos` dependency and continue to write `use lumos::...`.
 
 ## Documentation
 
@@ -176,7 +178,7 @@ Its `tests/http.rs` covers login and logout, CRUD, 422 responses, the 401/403 sp
 
 ```toml
 # Cargo.toml (dev-dependencies)
-lumos-testing = { version = "0.1" }
+lumos-testing = { package = "lumos-rs-testing", version = "0.1" }
 ```
 
 ```rust
@@ -248,10 +250,10 @@ Feature matrix (also in CI):
 
 ```sh
 for f in orm migrations validation auth views cache queue http-cache jsonapi jsonapi-lite; do
-  cargo check -p lumos --no-default-features --features "$f"
+  cargo check -p lumos-rs --no-default-features --features "$f"
 done
 # Must FAIL:
-cargo check -p lumos --features jsonapi,jsonapi-lite
+cargo check -p lumos-rs --features jsonapi,jsonapi-lite
 ```
 
 MSRV 1.88. License: MIT OR Apache-2.0.

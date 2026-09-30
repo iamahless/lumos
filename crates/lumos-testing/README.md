@@ -1,4 +1,4 @@
-# lumos-testing
+# lumos-rs-testing
 
 `lumos-testing` provides test helpers for Lumos applications. It includes an in-memory or file-backed test database, an in-process HTTP client with a cookie jar, response assertions, and a re-export of Rusticate's `factory!` macro.
 
@@ -6,7 +6,7 @@
 
 ```toml
 [dev-dependencies]
-lumos-testing = "0.1"
+lumos-testing = { package = "lumos-rs-testing", version = "0.1" }
 ```
 
 ## Database lifecycle

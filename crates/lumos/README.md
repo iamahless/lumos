@@ -1,4 +1,4 @@
-# lumos
+# lumos-rs
 
 Lumos is an MVC web framework for Rust. It provides routing, requests, responses, errors, configuration, a service container, middleware, and application lifecycle support. Optional features add persistence, validation, authentication, views, caching, queues, HTTP caching, and JSON:API.
 
@@ -6,14 +6,14 @@ Lumos is an MVC web framework for Rust. It provides routing, requests, responses
 
 ```toml
 [dependencies]
-lumos = { version = "0.1", default-features = false }
+lumos = { package = "lumos-rs", version = "0.1", default-features = false }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
 Enable only the capabilities used by the application:
 
 ```toml
-lumos = { version = "0.1", features = ["orm", "validation", "auth"] }
+lumos = { package = "lumos-rs", version = "0.1", features = ["orm", "validation", "auth"] }
 ```
 
 ## A small application
@@ -51,7 +51,7 @@ async fn main() -> lumos::Result<()> {
 
 ## Framework surface
 
-The facade re-exports `lumos-core` for HTTP and application primitives, `rusticate` when `orm` is enabled, and `lumos-jsonapi` when either JSON:API feature is enabled. It also re-exports `#[controller]` and `#[derive(JsonApiResource)]`.
+The `lumos-rs` package exports the `lumos` library. It re-exports `lumos-core` for HTTP and application primitives, `rusticate` when `orm` is enabled, and `lumos-jsonapi` when either JSON:API feature is enabled. It also re-exports `#[controller]` and `#[derive(JsonApiResource)]`.
 
 Use `routes!` to mount controllers and explicit routes. Controllers can be built from the container with `#[controller]`. The root repository README and the blog example describe application structure, providers, migrations, and test helpers in more detail.
 

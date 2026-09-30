@@ -51,11 +51,20 @@ jobs:
                   test -n "$workspace_version"
                   test "$tag_version" = "$workspace_version"
 
-                  for crate in lumos lumos-core lumos-cli lumos-macros lumos-testing rusticate lumos-jsonapi; do
-                    expected="${crate} = { version = \"${workspace_version}\", path ="
+                  for dependency in \
+                    'lumos:lumos-rs' \
+                    'lumos-core:lumos-rs-core' \
+                    'lumos-cli:lumos-rs-cli' \
+                    'lumos-macros:lumos-rs-macros' \
+                    'lumos-testing:lumos-rs-testing' \
+                    'rusticate:lumos-rs-rusticate' \
+                    'lumos-jsonapi:lumos-rs-jsonapi'; do
+                    crate="${dependency%%:*}"
+                    package="${dependency#*:}"
+                    expected="${crate} = { package = \"${package}\", version = \"${workspace_version}\", path ="
                     if ! grep -Fq "$expected" Cargo.toml; then
-                      printf '%s v%s does not depend on %s v%s. Update the internal dependency version before tagging.\n' \
-                        'workspace' "$workspace_version" "$crate" "$workspace_version" >&2
+                      printf '%s v%s does not depend on %s v%s. Update the internal dependency mapping before tagging.\n' \
+                        'workspace' "$workspace_version" "$package" "$workspace_version" >&2
                       exit 1
                     fi
                   done
@@ -89,13 +98,13 @@ jobs:
                   set -euo pipefail
 
                   packages=(
-                    lumos-macros
-                    rusticate
-                    lumos-core
-                    lumos-jsonapi
-                    lumos-testing
-                    lumos-cli
-                    lumos
+                    lumos-rs-macros
+                    lumos-rs-rusticate
+                    lumos-rs-core
+                    lumos-rs-jsonapi
+                    lumos-rs-testing
+                    lumos-rs-cli
+                    lumos-rs
                   )
 
                   for package in "${packages[@]}"; do

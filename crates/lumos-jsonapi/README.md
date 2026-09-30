@@ -1,4 +1,4 @@
-# lumos-jsonapi
+# lumos-rs-jsonapi
 
 `lumos-jsonapi` renders JSON:API documents and validates JSON:API request negotiation for Lumos applications. It provides resource traits, request-query parsing, response renderers, relationship linkage, filtering, sorting, pagination, sparse fieldsets, and include handling.
 

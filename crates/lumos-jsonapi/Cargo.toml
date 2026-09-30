@@ -1,14 +1,17 @@
 [package]
-name = "lumos-jsonapi"
+name = "lumos-rs-jsonapi"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-documentation = "https://docs.rs/lumos-jsonapi"
+documentation = "https://docs.rs/lumos-rs-jsonapi"
 readme = "README.md"
 description = "JSON:API v1.1 serialization and content negotiation for Lumos"
+
+[lib]
+name = "lumos_jsonapi"
 
 [features]
 default = []

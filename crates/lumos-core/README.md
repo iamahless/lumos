@@ -1,4 +1,4 @@
-# lumos-core
+# lumos-rs-core
 
 `lumos-core` is the Lumos kernel. It owns the application boot lifecycle, service container, configuration loading, routing, request extractors, response helpers, error documents, middleware, route registration, and logging.
 
@@ -8,7 +8,7 @@ Most applications depend on `lumos`, which re-exports this crate's public API. D
 
 ```toml
 [dependencies]
-lumos-core = "0.1"
+lumos-core = { package = "lumos-rs-core", version = "0.1" }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 

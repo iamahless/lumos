@@ -1,16 +1,17 @@
 [package]
-name = "lumos-macros"
+name = "lumos-rs-macros"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-documentation = "https://docs.rs/lumos-macros"
+documentation = "https://docs.rs/lumos-rs-macros"
 readme = "README.md"
 description = "Compile-time codegen for Lumos: controllers, models, resources"
 
 [lib]
+name = "lumos_macros"
 proc-macro = true
 
 [dependencies]

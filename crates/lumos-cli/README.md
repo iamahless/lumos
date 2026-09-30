@@ -1,4 +1,4 @@
-# lumos-cli
+# lumos-rs-cli
 
 `lumos-cli` is the developer CLI for Lumos. The `lumos` binary creates projects, generates application files, starts a development server, and prints help and version information. Its library API supports migration, seeding, and route-list commands from an application's own CLI binary.
 
@@ -7,14 +7,14 @@
 Install the binary from crates.io:
 
 ```sh
-cargo install lumos-cli
+cargo install lumos-rs-cli
 ```
 
 Or depend on it in an application that needs app-linked commands:
 
 ```toml
 [dependencies]
-lumos-cli = "0.1"
+lumos-cli = { package = "lumos-rs-cli", version = "0.1" }
 ```
 
 ## Project commands

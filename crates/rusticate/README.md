@@ -1,4 +1,4 @@
-# rusticate
+# lumos-rs-rusticate
 
 Rusticate is an Eloquent-inspired ORM for Rust. It supports SQLite, PostgreSQL, and MySQL through sqlx's `Any` driver. The database target is explicit in every query, so the same query can run against a database connection or a transaction.
 
@@ -6,7 +6,7 @@ Rusticate is an Eloquent-inspired ORM for Rust. It supports SQLite, PostgreSQL, 
 
 ```toml
 [dependencies]
-rusticate = "0.1"
+rusticate = { package = "lumos-rs-rusticate", version = "0.1" }
 ```
 
 ## A model and query

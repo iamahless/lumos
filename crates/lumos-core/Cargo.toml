@@ -1,14 +1,17 @@
 [package]
-name = "lumos-core"
+name = "lumos-rs-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-documentation = "https://docs.rs/lumos-core"
+documentation = "https://docs.rs/lumos-rs-core"
 readme = "README.md"
 description = "Lumos kernel: routing, HTTP primitives, service container, config, errors, middleware"
+
+[lib]
+name = "lumos_core"
 
 [features]
 default = []

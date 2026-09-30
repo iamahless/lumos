@@ -1,4 +1,4 @@
-# lumos-macros
+# lumos-rs-macros
 
 `lumos-macros` contains the procedural macros used by Lumos and Rusticate. They generate routing, dependency-injection, ORM, JSON:API, and query-scope code at compile time.
 

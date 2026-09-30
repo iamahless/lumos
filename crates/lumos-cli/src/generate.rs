@@ -529,8 +529,8 @@ pub fn render_new(name: &str, lumos_version: &str) -> Result<Generated, CliError
          edition = \"2021\"\n\
          \n\
          [dependencies]\n\
-         lumos = \"{lumos_version}\"\n\
-         lumos-cli = \"{lumos_version}\"\n\
+         lumos = {{ package = \"lumos-rs\", version = \"{lumos_version}\" }}\n\
+         lumos-cli = {{ package = \"lumos-rs-cli\", version = \"{lumos_version}\" }}\n\
          tokio = {{ version = \"1\", features = [\"macros\", \"rt-multi-thread\"] }}\n\
          \n\
          [[bin]]\n\
@@ -747,7 +747,12 @@ mod tests {
             .find(|file| file.path.to_str() == Some("Cargo.toml"))
             .unwrap();
         assert!(cargo.content.contains("name = \"my-app\""));
-        assert!(cargo.content.contains("lumos = \"0.1\""));
+        assert!(cargo
+            .content
+            .contains("lumos = { package = \"lumos-rs\", version = \"0.1\" }"));
+        assert!(cargo
+            .content
+            .contains("lumos-cli = { package = \"lumos-rs-cli\", version = \"0.1\" }"));
         let main = generated
             .files
             .iter()

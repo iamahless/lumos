@@ -1,14 +1,17 @@
 [package]
-name = "lumos"
+name = "lumos-rs"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-documentation = "https://docs.rs/lumos"
+documentation = "https://docs.rs/lumos-rs"
 readme = "README.md"
 description = "Lumos web framework: MVC, batteries-included, feature-flag driven"
+
+[lib]
+name = "lumos"
 
 [features]
 default = []

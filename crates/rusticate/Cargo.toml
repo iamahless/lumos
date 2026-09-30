@@ -1,14 +1,17 @@
 [package]
-name = "rusticate"
+name = "lumos-rs-rusticate"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
-documentation = "https://docs.rs/rusticate"
+documentation = "https://docs.rs/lumos-rs-rusticate"
 readme = "README.md"
 description = "Rusticate: Eloquent-inspired ORM for Rust (usable with or without Lumos)"
+
+[lib]
+name = "rusticate"
 
 [dependencies]
 sqlx = { workspace = true, features = ["any", "runtime-tokio-rustls", "sqlite", "postgres", "mysql", "chrono", "json", "uuid"] }

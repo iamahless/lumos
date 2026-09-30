@@ -14,7 +14,7 @@ Lumos is a compile-time Rust web framework. Applications normally depend on the 
 | `lumos-testing` | In-process HTTP and database test utilities | Application production wiring |
 | `lumos-cli` | Project scaffolding, generators, development commands | Application-specific registrations |
 
-`lumos` depends on the optional subsystems. `lumos-core` and `rusticate` have no internal dependency on each other. `lumos-jsonapi` uses `lumos-core` and leaves database filtering and sorting to the application. The ORM can therefore run without HTTP, and JSON:API can render resources that do not use Rusticate.
+`lumos` depends on the optional subsystems. `lumos-core` and `rusticate` have no internal dependency on each other. `lumos-jsonapi` uses `lumos-core` and leaves database filtering and sorting to the application. The ORM can therefore run without HTTP, and JSON:API can render resources that do not use Rusticate. The published package names use the `lumos-rs-*` prefix while retaining these Rust library import names.
 
 ## Composition root
 
@@ -62,7 +62,7 @@ When extending an application, put cross-cutting request work in an Axum layer o
 Start with no optional features and enable only what the application needs:
 
 ```toml
-lumos = { version = "0.1", default-features = false, features = ["orm", "validation", "auth", "jsonapi"] }
+lumos = { package = "lumos-rs", version = "0.1", default-features = false, features = ["orm", "validation", "auth", "jsonapi"] }
 ```
 
 `migrations` implies `orm`; `auth` implies `validation`; `jsonapi` and `jsonapi-lite` are mutually exclusive. `cache`, `queue`, and `http-cache` are public feature placeholders, not production implementations in this release.

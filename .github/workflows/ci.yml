@@ -19,12 +19,12 @@ jobs:
         steps:
             - uses: actions/checkout@v7
             - run: cargo clippy --workspace --all-targets -- -D warnings
-            - run: cargo clippy -p lumos-core --features validation,auth,views --all-targets -- -D warnings
-            - run: cargo clippy -p lumos --features validation,auth,views,orm --all-targets -- -D warnings
-            - run: cargo clippy -p lumos-jsonapi --features jsonapi --all-targets -- -D warnings
-            - run: cargo clippy -p lumos-jsonapi --features jsonapi-lite --all-targets -- -D warnings
-            - run: cargo clippy -p lumos --features jsonapi --all-targets -- -D warnings
-            - run: cargo clippy -p lumos --features jsonapi-lite --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-rs-core --features validation,auth,views --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-rs --features validation,auth,views,orm --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-rs-jsonapi --features jsonapi --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-rs-jsonapi --features jsonapi-lite --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-rs --features jsonapi --all-targets -- -D warnings
+            - run: cargo clippy -p lumos-rs --features jsonapi-lite --all-targets -- -D warnings
 
     test:
         runs-on: ubuntu-latest
@@ -36,43 +36,43 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
-            - run: cargo test -p rusticate
-            - run: cargo test -p lumos --features orm
-            - run: cargo test -p lumos-core --features orm
+            - run: cargo test -p lumos-rs-rusticate
+            - run: cargo test -p lumos-rs --features orm
+            - run: cargo test -p lumos-rs-core --features orm
 
     phase3:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
-            - run: cargo test -p lumos-core --features validation,auth,views
-            - run: cargo test -p lumos --features auth,views
+            - run: cargo test -p lumos-rs-core --features validation,auth,views
+            - run: cargo test -p lumos-rs --features auth,views
 
     jsonapi:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
-            - run: cargo test -p lumos-jsonapi --features jsonapi
-            - run: cargo test -p lumos-jsonapi --features jsonapi-lite
-            - run: cargo test -p lumos --features jsonapi
-            - run: cargo test -p lumos --features jsonapi-lite --test jsonapi_path
+            - run: cargo test -p lumos-rs-jsonapi --features jsonapi
+            - run: cargo test -p lumos-rs-jsonapi --features jsonapi-lite
+            - run: cargo test -p lumos-rs --features jsonapi
+            - run: cargo test -p lumos-rs --features jsonapi-lite --test jsonapi_path
 
     cli:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
-            - run: cargo test -p lumos-cli
-            - run: cargo run -p lumos-cli --bin lumos -- --help
+            - run: cargo test -p lumos-rs-cli
+            - run: cargo run -p lumos-rs-cli --bin lumos -- --help
             - name: generated skeleton compiles and lists routes
               run: |
-                  cargo run -p lumos-cli --bin lumos -- new skel --path /tmp/skel
+                  cargo run -p lumos-rs-cli --bin lumos -- new skel --path /tmp/skel
                   python3 - "$GITHUB_WORKSPACE" <<'EOF'
                   import re
                   import sys
                   root = sys.argv[1]
                   p = '/tmp/skel/Cargo.toml'
                   s = open(p).read()
-                  s, lumos_count = re.subn(r'^lumos = "[^"]+"$', f'lumos = {{ path = "{root}/crates/lumos" }}', s, flags=re.MULTILINE)
-                  s, cli_count = re.subn(r'^lumos-cli = "[^"]+"$', f'lumos-cli = {{ path = "{root}/crates/lumos-cli" }}', s, flags=re.MULTILINE)
+                  s, lumos_count = re.subn(r'^lumos = .+$', f'lumos = {{ package = "lumos-rs", path = "{root}/crates/lumos" }}', s, flags=re.MULTILINE)
+                  s, cli_count = re.subn(r'^lumos-cli = .+$', f'lumos-cli = {{ package = "lumos-rs-cli", path = "{root}/crates/lumos-cli" }}', s, flags=re.MULTILINE)
                   if (lumos_count, cli_count) != (1, 1):
                       raise SystemExit('generated Cargo.toml did not contain exactly one Lumos dependency pair')
                   open(p, 'w').write(s)
@@ -85,8 +85,8 @@ jobs:
         steps:
             - uses: actions/checkout@v7
             - run: cargo test -p blog
-            - run: cargo test -p lumos-testing
-            - run: cargo test -p rusticate --test orm
+            - run: cargo test -p lumos-rs-testing
+            - run: cargo test -p lumos-rs-rusticate --test orm
             - name: file-backed migrate/seed/route tour
               run: |
                   cd apps/blog
@@ -113,13 +113,13 @@ jobs:
                     - jsonapi-lite
         steps:
             - uses: actions/checkout@v7
-            - run: cargo check -p lumos --no-default-features --features ${{ matrix.features }}
+            - run: cargo check -p lumos-rs --no-default-features --features ${{ matrix.features }}
 
     all-safe:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
-            - run: cargo check -p lumos --features orm,migrations,validation,auth,views,cache,queue,http-cache,jsonapi
+            - run: cargo check -p lumos-rs --features orm,migrations,validation,auth,views,cache,queue,http-cache,jsonapi
 
     exclusivity:
         runs-on: ubuntu-latest
@@ -127,7 +127,7 @@ jobs:
             - uses: actions/checkout@v7
             - name: jsonapi + jsonapi-lite must refuse to compile
               run: |
-                  if cargo check -p lumos --features jsonapi,jsonapi-lite 2>&1 | grep -q "mutually exclusive"; then
+                  if cargo check -p lumos-rs --features jsonapi,jsonapi-lite 2>&1 | grep -q "mutually exclusive"; then
                     echo "guard fires as designed"
                   else
                     echo "exclusivity guard did not fire"
