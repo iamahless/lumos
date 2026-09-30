@@ -14,7 +14,7 @@ members = [
 [workspace.package]
 edition = "2021"
 rust-version = "1.88"
-version = "0.1.1"
+version = "0.1.2"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/iamahless/lumos"
 repository = "https://github.com/iamahless/lumos"
@@ -59,10 +59,10 @@ argon2 = "0.6"
 askama = "0.16"
 
 # Internal crates.
-lumos = { version = "0.1.1", path = "crates/lumos" }
-lumos-core = { version = "0.1.1", path = "crates/lumos-core" }
-lumos-cli = { version = "0.1.1", path = "crates/lumos-cli" }
-lumos-macros = { version = "0.1.1", path = "crates/lumos-macros" }
-lumos-testing = { version = "0.1.1", path = "crates/lumos-testing" }
-rusticate = { version = "0.1.1", path = "crates/rusticate" }
-lumos-jsonapi = { version = "0.1.1", path = "crates/lumos-jsonapi" }
+lumos = { version = "0.1.2", path = "crates/lumos" }
+lumos-core = { version = "0.1.2", path = "crates/lumos-core" }
+lumos-cli = { version = "0.1.2", path = "crates/lumos-cli" }
+lumos-macros = { version = "0.1.2", path = "crates/lumos-macros" }
+lumos-testing = { version = "0.1.2", path = "crates/lumos-testing" }
+rusticate = { version = "0.1.2", path = "crates/rusticate" }
+lumos-jsonapi = { version = "0.1.2", path = "crates/lumos-jsonapi" }

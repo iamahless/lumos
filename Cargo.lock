@@ -234,7 +234,7 @@ dependencies = [
 
 [[package]]
 name = "blog"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "lumos",
@@ -1043,7 +1043,7 @@ checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
 name = "lumos"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "askama",
  "lumos-core",
@@ -1059,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "lumos-cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "lumos-core",
@@ -1069,7 +1069,7 @@ dependencies = [
 
 [[package]]
 name = "lumos-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "argon2",
  "askama",
@@ -1091,7 +1091,7 @@ dependencies = [
 
 [[package]]
 name = "lumos-jsonapi"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "lumos-core",
  "mime",
@@ -1102,7 +1102,7 @@ dependencies = [
 
 [[package]]
 name = "lumos-macros"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1111,7 +1111,7 @@ dependencies = [
 
 [[package]]
 name = "lumos-testing"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "lumos-core",
  "rusticate",
@@ -1515,7 +1515,7 @@ checksum = "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
 
 [[package]]
 name = "rusticate"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
