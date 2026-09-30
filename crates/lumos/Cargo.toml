@@ -1,0 +1,32 @@
+[package]
+name = "lumos"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Lumos web framework: MVC, batteries-included, feature-flag driven"
+
+[features]
+default = []
+orm = ["dep:rusticate"]
+migrations = ["orm"]
+validation = ["lumos-core/validation"]
+auth = ["lumos-core/auth", "validation"]
+views = ["lumos-core/views"]
+cache = ["lumos-core/cache"]
+queue = ["lumos-core/queue"]
+http-cache = ["lumos-core/http-cache"]
+jsonapi = ["orm", "dep:lumos-jsonapi", "lumos-jsonapi/jsonapi", "lumos-core/jsonapi"]
+jsonapi-lite = ["orm", "dep:lumos-jsonapi", "lumos-jsonapi/jsonapi-lite", "lumos-core/jsonapi-lite"]
+
+[dependencies]
+lumos-core.workspace = true
+lumos-macros.workspace = true
+rusticate = { workspace = true, optional = true }
+lumos-jsonapi = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower = { workspace = true, features = ["util"] }
+serde.workspace = true
+serde_json.workspace = true

@@ -1,0 +1,11 @@
+[package]
+name = "lumos-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Artisan-like developer CLI for Lumos: generators, migrations, dev server"
+
+[[bin]]
+name = "lumos"
+path = "src/main.rs"

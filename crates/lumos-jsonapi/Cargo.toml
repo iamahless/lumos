@@ -1,0 +1,12 @@
+[package]
+name = "lumos-jsonapi"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "JSON:API v1.1 serialization and content negotiation for Lumos"
+
+[features]
+default = []
+jsonapi = []
+jsonapi-lite = []

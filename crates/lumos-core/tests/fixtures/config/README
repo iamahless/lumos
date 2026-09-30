@@ -1,0 +1,1 @@
+Non-TOML files in this directory are ignored by Config::load_from (covered by test).

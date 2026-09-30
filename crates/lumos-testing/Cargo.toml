@@ -1,0 +1,7 @@
+[package]
+name = "lumos-testing"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Test helpers for Lumos applications: factories, DB reset, assertions"

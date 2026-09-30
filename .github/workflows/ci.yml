@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test --workspace
+
+  features:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        features:
+          - orm
+          - migrations
+          - validation
+          - auth
+          - views
+          - cache
+          - queue
+          - http-cache
+          - jsonapi
+          - jsonapi-lite
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo check -p lumos --no-default-features --features ${{ matrix.features }}
+
+  all-safe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo check -p lumos --features orm,migrations,validation,auth,views,cache,queue,http-cache,jsonapi
+
+  exclusivity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: jsonapi + jsonapi-lite must refuse to compile
+        run: |
+          if cargo check -p lumos --features jsonapi,jsonapi-lite 2>&1 | grep -q "mutually exclusive"; then
+            echo "guard fires as designed"
+          else
+            echo "exclusivity guard did not fire"
+            exit 1
+          fi

@@ -1,0 +1,33 @@
+[package]
+name = "lumos-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Lumos kernel: routing, HTTP primitives, service container, config, errors, middleware"
+
+[features]
+default = []
+# Pure flags in Phase 1 (wiring only; modules land in the noted phase).
+validation = []          # Phase 3
+auth = ["validation"]    # Phase 3
+views = []               # Phase 3
+cache = []               # Phase 3+
+queue = []               # v0.2
+jsonapi = []             # Phase 4
+jsonapi-lite = []        # Phase 4
+http-cache = ["dep:tower-http"]
+
+[dependencies]
+axum.workspace = true
+tokio = { workspace = true, features = ["macros", "net", "rt-multi-thread", "signal"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tower.workspace = true
+async-trait.workspace = true
+toml.workspace = true
+dotenvy.workspace = true
+tower-http = { workspace = true, optional = true }

@@ -1,0 +1,3 @@
+[default]
+url = "sqlite::memory:"
+pool = 5

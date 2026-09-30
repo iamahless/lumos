@@ -1,0 +1,51 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/lumos",
+    "crates/lumos-core",
+    "crates/lumos-macros",
+    "crates/lumos-jsonapi",
+    "crates/lumos-testing",
+    "crates/lumos-cli",
+    "crates/rusticate",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.75"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# HTTP + async. axum pulls hyper + matchit transitively; they are never
+# declared directly.
+axum = "0.8"
+tokio = "1"
+tower = "0.5"
+tower-http = "0.7"
+# Strict Accept/Content-Type parsing (used from Phase 4 negotiation).
+mime = "0.3"
+# Serialization.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Errors + observability.
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+# Object-safe async traits (service providers).
+async-trait = "0.1"
+# Config: config/*.toml + .env.
+toml = "1"
+dotenvy = "0.15"
+# Zero-copy bodies (reserved for Phase 3+ extractors).
+bytes = "1"
+# Proc macros. syn v2: stable, well-understood API surface.
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"
+
+# Internal crates.
+lumos-core = { version = "0.1.0", path = "crates/lumos-core" }
+lumos-macros = { version = "0.1.0", path = "crates/lumos-macros" }
+rusticate = { version = "0.1.0", path = "crates/rusticate" }
+lumos-jsonapi = { version = "0.1.0", path = "crates/lumos-jsonapi" }
