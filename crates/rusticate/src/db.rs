@@ -954,6 +954,35 @@ impl Target {
             }
         }
     }
+
+    /// Runs a write then a read on one connection, returning the read row.
+    ///
+    /// Separate pool checkouts would split the pair across connections,
+    /// corrupting connection-local reads like `last_insert_rowid()` (the
+    /// second checkout can see another connection's most recent insert).
+    /// Single-connection pools mask this; multi-connection pools do not.
+    pub(crate) async fn execute_then_fetch_optional(
+        &self,
+        execute_sql: &str,
+        execute_binds: Vec<BindValue>,
+        fetch_sql: &str,
+    ) -> Result<Option<AnyRow>> {
+        match &self.tx {
+            None => {
+                let mut conn = self.db.pool.acquire().await.map_err(Error::db)?;
+                bind_and_execute(&mut *conn, execute_sql, execute_binds).await?;
+                bind_and_fetch_optional(&mut *conn, fetch_sql, Vec::new()).await
+            }
+            Some(conn) => {
+                let mut guard = conn.slot.lock().await;
+                let slot = guard.as_mut().ok_or(Error::TransactionFinished)?;
+                let tx = slot.tx.as_mut().ok_or(Error::TransactionFinished)?;
+                let conn = &mut **tx;
+                bind_and_execute(&mut *conn, execute_sql, execute_binds).await?;
+                bind_and_fetch_optional(&mut *conn, fetch_sql, Vec::new()).await
+            }
+        }
+    }
 }
 
 /// Binds every value with its concrete type (so drivers see exact types on

@@ -665,12 +665,11 @@ pub trait Model: Sized + Send + Sync + 'static {
         if target.dialect() == Dialect::Postgres {
             let row = insert_returning::<Self>(&target, Self::table(), &columns).await?;
             model = Self::from_row(&row)?;
+        } else if Self::auto_increment_pk() {
+            let id = insert_returning_id(&target, Self::table(), &columns).await?;
+            model.set_pk_from_i64(id)?;
         } else {
             insert(&target, Self::table(), &columns).await?;
-            if Self::auto_increment_pk() {
-                let id = last_insert_id(&target).await?;
-                model.set_pk_from_i64(id)?;
-            }
         }
 
         crate::observers::fire_created(&target, &model).await?;
@@ -1039,19 +1038,23 @@ fn render_insert(
     Ok((sql, binds))
 }
 
-/// Reads the last auto-increment id on SQLite/MySQL (Postgres uses `RETURNING`).
-async fn last_insert_id(target: &Target) -> Result<i64> {
-    let sql = match target.dialect() {
+/// Inserts one row and returns its auto-increment id, running both
+/// statements on one connection: connection-local id reads go stale
+/// when the pair splits across pooled connections (Postgres uses
+/// `RETURNING` instead and never reaches here).
+async fn insert_returning_id(target: &Target, table: &str, changeset: &Changeset) -> Result<i64> {
+    let id_sql = match target.dialect() {
         Dialect::SQLite => "SELECT last_insert_rowid() AS id",
         Dialect::MySQL => "SELECT LAST_INSERT_ID() AS id",
         Dialect::Postgres => {
             return Err(Error::invalid_query(
-                "last_insert_id is unavailable on Postgres (uses RETURNING)",
+                "insert_returning_id is unavailable on Postgres (uses RETURNING)",
             ))
         }
     };
+    let (sql, binds) = render_insert(target.dialect(), table, changeset)?;
     let row = target
-        .fetch_optional(sql, Vec::new())
+        .execute_then_fetch_optional(&sql, binds, id_sql)
         .await?
         .ok_or_else(|| Error::not_found("last insert id"))?;
     row.try_get::<i64, _>("id")

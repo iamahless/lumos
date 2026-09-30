@@ -77,6 +77,21 @@ jobs:
           cd /tmp/skel && cargo check --all-targets
           cargo run -q --bin cli -- route:list
 
+  blog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test -p blog
+      - run: cargo test -p rusticate --test orm
+      - name: file-backed migrate/seed/route tour
+        run: |
+          cd apps/blog
+          export DATABASE_URL='sqlite:/tmp/blog.db?mode=rwc'
+          rm -f /tmp/blog.db
+          cargo run -q -p blog --bin cli -- migrate
+          cargo run -q -p blog --bin cli -- db:seed
+          cargo run -q -p blog --bin cli -- route:list
+
   features:
     runs-on: ubuntu-latest
     strategy:

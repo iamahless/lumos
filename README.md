@@ -2,7 +2,7 @@
 
 A lightweight, MVC, batteries-included Rust web framework with an Eloquent-inspired ORM. Minimal by default, feature-flag driven, and JSON:API-capable — built so a Laravel/Lumen developer feels at home while the framework stays idiomatic Rust: no runtime reflection, no global mutable state, all magic at compile time via proc-macros.
 
-> **Status: Phase 5 — CLI.** On top of Phase 4: the `lumos` developer CLI (`lumos-cli` lib + thin binary) — `new` scaffolds a runnable API skeleton, `serve` wraps `cargo run` with `HOST`/`PORT`, six `make:*` generators write controllers/models/migrations/seeders/resources/middleware, and app-linked `migrate` / `migrate:rollback` / `migrate:status` / `db:seed` / `route:list` run from the app's own binary via `AppContext` (the skeleton pre-wires it). The `#[controller]` macro now also emits `route_entries()` for an explicit `RouteRegistry`. Testing helpers and the example app land in Phases 6–7.
+> **Status: Phase 6 — example app.** On top of Phase 5: `apps/blog`, a runnable JSON:API blog (users/posts/comments) touring controllers, the ORM, migrations, seeders, validation, session auth, and JSON:API querying, with a 10-test HTTP integration suite. Building it fixed a real rusticate bug: `Model::create` read the new id on a separate pooled connection (single-connection memory DBs masked it). Testing helpers land in Phase 7.
 
 ## Quickstart
 
@@ -32,11 +32,11 @@ async fn main() -> lumos::Result<()> {
 | --------------- | ------------------------------------------------------------------------ |
 | `lumos`         | Facade: feature flags + curated re-exports. This is what apps depend on. |
 | `lumos-core`    | Kernel: router, HTTP, container, config, errors, middleware, providers.  |
-| `lumos-macros`  | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`).    |
-| `rusticate`     | Standalone ORM. Never depends on `lumos-core`.                            |
-| `lumos-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`).        |
+| `lumos-macros`  | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`).  |
+| `rusticate`     | Standalone ORM. Never depends on `lumos-core`.                           |
+| `lumos-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`).       |
 | `lumos-testing` | Test helpers (Phase 7).                                                  |
-| `lumos-cli`     | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed.  |
+| `lumos-cli`     | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed.   |
 
 Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
 `lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred:
@@ -47,19 +47,19 @@ generators are dependency-free); `lumos-core` → nothing internal;
 
 ## Feature flags
 
-| Feature        | Default | Enables                                      |
-| -------------- | ------- | -------------------------------------------- |
-| *(core)*       | yes     | Routing, request/response, error handling    |
-| `orm`          | no      | Rusticate ORM                                |
-| `migrations`   | no      | ORM migrations (implies `orm`)               |
-| `validation`   | no      | `Validated` extractors + `Validate` (→ 422)  |
+| Feature        | Default | Enables                                     |
+| -------------- | ------- | ------------------------------------------- |
+| *(core)*       | yes     | Routing, request/response, error handling   |
+| `orm`          | no      | Rusticate ORM                               |
+| `migrations`   | no      | ORM migrations (implies `orm`)              |
+| `validation`   | no      | `Validated` extractors + `Validate` (→ 422) |
 | `auth`         | no      | Argon2, sessions, guards (→ `validation`)   |
-| `views`        | no      | Askama templates via `View`                  |
-| `cache`        | no      | Cache drivers                                |
-| `queue`        | no      | Queue drivers (v0.2)                         |
-| `http-cache`   | no      | ETag / cache-control middleware              |
-| `jsonapi`      | no      | Full JSON:API v1.1 (implies `orm`)           |
-| `jsonapi-lite` | no      | Simplified JSON:API (implies `orm`)          |
+| `views`        | no      | Askama templates via `View`                 |
+| `cache`        | no      | Cache drivers                               |
+| `queue`        | no      | Queue drivers (v0.2)                        |
+| `http-cache`   | no      | ETag / cache-control middleware             |
+| `jsonapi`      | no      | Full JSON:API v1.1 (implies `orm`)          |
+| `jsonapi-lite` | no      | Simplified JSON:API (implies `orm`)         |
 
 `jsonapi` + `jsonapi-lite` together is a compile error. Every flag
 compiles standalone; CI checks each flag, the all-safe set, and the
@@ -157,6 +157,20 @@ cargo run --bin cli -- migrate
 mount (axum routers can't be introspected, so raw axum routes stay
 invisible by design); the `#[controller]` macro's `route_entries()`
 keeps registry entries in sync with the routes it generates.
+
+## Example app
+
+`apps/blog` is the full tour in one runnable crate: users, posts, and comments behind JSON:API, with session login, `Validated` inputs, and migrations + seeders. It mirrors `lumos new` output (lib + server + cli bins), so it doubles as the reference project layout:
+
+```sh
+cd apps/blog
+export DATABASE_URL=sqlite:blog.db?mode=rwc
+cargo run -p blog --bin cli -- migrate && cargo run -p blog --bin cli -- db:seed
+cargo run -p blog                    # serves 127.0.0.1:3000
+cargo test -p blog                   # integration tour (in-memory DB)
+```
+
+Its `tests/http.rs` walks login/logout, CRUD, 422s, the 401/403 split, 406/415 negotiation, 409 id mismatch, filters, sorting, pagination, and fieldsets — extend that tour when adding framework behavior.
 
 ## Why each core dependency exists
 

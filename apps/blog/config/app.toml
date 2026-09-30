@@ -1,0 +1,3 @@
+# Blog configuration (see lumos Config).
+name = "blog"
+env = "local"

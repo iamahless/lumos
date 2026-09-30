@@ -819,3 +819,43 @@ async fn select_renders_casts_and_placeholders_per_dialect() {
     assert!(!sql.contains("CAST"), "{sql}");
     assert!(sql.contains(r#"WHERE "name" = ?"#), "{sql}");
 }
+
+#[tokio::test]
+async fn create_returns_true_ids_on_multi_connection_pools() -> Result<()> {
+    // `DB::memory` pins one connection, which masks connection-local id
+    // reads splitting across pooled connections. A file database uses
+    // the real pool (5 connections), where `create` must still report
+    // each row's own id.
+    let path = std::env::temp_dir().join(format!("rusticate-ids-{}.db", std::process::id()));
+    let _ = std::fs::remove_file(&path);
+    let db = DB::connect(&format!("sqlite:{}?mode=rwc", path.display())).await?;
+    let schema = Schema::new(&db);
+    schema
+        .create("users", |t| {
+            t.id();
+            t.string("name");
+            t.string("email").unique();
+            t.boolean("active").default(false);
+            t.json("tags").nullable();
+            t.string("role").default("member");
+            t.string("password_hash");
+            t.timestamps();
+            t.soft_deletes();
+        })
+        .await?;
+    // Burn rowids on other pooled connections: without same-connection
+    // id reads, later creates report these foreign ids.
+    for index in 0..5 {
+        User::query(&db)
+            .where_eq("name", format!("decoy-{index}"))
+            .count()
+            .await?;
+    }
+    let first = User::create(&db, user_changeset("ada")).await?;
+    let second = User::create(&db, user_changeset("grace")).await?;
+    assert_eq!((first.id, second.id), (1, 2));
+    assert_eq!(User::find(&db, 1).await?.unwrap().name, "ada");
+    assert_eq!(User::find(&db, 2).await?.unwrap().name, "grace");
+    let _ = std::fs::remove_file(&path);
+    Ok(())
+}

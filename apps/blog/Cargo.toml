@@ -1,0 +1,24 @@
+[package]
+name = "blog"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Lumos example app: JSON:API blog with auth, validation, and ORM"
+
+[[bin]]
+name = "cli"
+path = "src/bin/cli.rs"
+
+[dependencies]
+lumos = { version = "0.1.0", path = "../../crates/lumos", features = ["orm", "migrations", "validation", "auth", "jsonapi"] }
+lumos-cli = { version = "0.1.0", path = "../../crates/lumos-cli" }
+rusticate = { version = "0.1.0", path = "../../crates/rusticate" }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+serde = { workspace = true }
+chrono = { workspace = true }
+validator = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+tower = { workspace = true }
