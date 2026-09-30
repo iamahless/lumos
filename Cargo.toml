@@ -39,6 +39,11 @@ toml = "1"
 dotenvy = "0.15"
 # Zero-copy bodies (reserved for Phase 3+ extractors).
 bytes = "1"
+# ORM (rusticate only; sqlx 0.8 keeps the MSRV 1.75 story — 0.9 needs 1.94).
+# No default features: rusticate enables exactly the drivers it needs.
+sqlx = { version = "0.8", default-features = false }
+chrono = { version = "0.4", features = ["serde", "clock"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 # Proc macros. syn v2: stable, well-understood API surface.
 syn = { version = "2", features = ["full"] }
 quote = "1"

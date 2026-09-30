@@ -8,6 +8,7 @@ description = "Lumos kernel: routing, HTTP primitives, service container, config
 
 [features]
 default = []
+orm = ["dep:rusticate"]
 # Pure flags in Phase 1 (wiring only; modules land in the noted phase).
 validation = []          # Phase 3
 auth = ["validation"]    # Phase 3
@@ -31,3 +32,4 @@ async-trait.workspace = true
 toml.workspace = true
 dotenvy.workspace = true
 tower-http = { workspace = true, optional = true }
+rusticate = { workspace = true, optional = true }

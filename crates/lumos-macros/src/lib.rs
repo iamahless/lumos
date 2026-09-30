@@ -3,8 +3,12 @@
 //! All framework "magic" lives here, at compile time: there is no runtime
 //! reflection and no global state anywhere in Lumos.
 //!
-//! Phase 1 ships [`controller`]. `Model`, `Validate`, `FormRequest`,
-//! `Migration`, and `JsonApiResource` arrive with their phases.
+//! Phase 1 ships [`controller`]; Phase 2 adds [`Model`] and [`scopes`].
+//! `Validate`, `FormRequest`, `Migration`, and `JsonApiResource` arrive with
+//! their phases.
+
+mod model;
+mod scopes;
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -360,4 +364,81 @@ fn mount_route(
             __router = __router.route(#path, #crate_path::#verb(__handler));
         }
     }
+}
+
+/// Derives the [`Model`](::rusticate::Model) trait: metadata, row hydration,
+/// changesets, timestamps, relations, and eager loading.
+///
+/// Container options (`#[model(...)]` on the struct): `table` (required),
+/// `primary_key` (default `"id"`), `timestamps` / `soft_deletes` (bool or
+/// bare flag), `appends = ["method", ...]` (extra `to_value` entries).
+///
+/// Field options: `id`, `auto_increment`, `hidden`, `casts = "json" |
+/// "string" | "bool" | "datetime"`, `has_many = "Post"` / `belongs_to =
+/// "Team"` (with `foreign_key` / `local_key` overrides), and the
+/// `created_at` / `updated_at` / `deleted_at` markers (timestamps and soft
+/// deletes assume conventionally-named fields when markers are absent).
+///
+/// Every model owner depends on `rusticate` directly (it is standalone by
+/// design), so generated paths use `::rusticate` unconditionally.
+///
+/// # Examples
+///
+/// ```ignore
+/// use rusticate::{BelongsTo, HasMany, Model};
+///
+/// #[derive(Model)]
+/// #[model(table = "users", timestamps = true)]
+/// pub struct User {
+///     #[model(id, auto_increment)]
+///     pub id: i64,
+///     pub name: String,
+///     #[model(has_many = "Post")]
+///     pub posts: HasMany<Post>,
+///     #[model(created_at)]
+///     pub created_at: chrono::DateTime<chrono::Utc>,
+///     #[model(updated_at)]
+///     pub updated_at: chrono::DateTime<chrono::Utc>,
+/// }
+/// ```
+#[proc_macro_derive(Model, attributes(model))]
+pub fn derive_model(input: TokenStream) -> TokenStream {
+    let parsed = parse_macro_input!(input as syn::DeriveInput);
+    model::expand(&parsed)
+        .unwrap_or_else(|error| error.to_compile_error())
+        .into()
+}
+
+/// Turns `scope_*` associated functions into chainable query methods.
+///
+/// For each `pub` scope in the impl block, generates a `{Model}Scopes` trait
+/// (import it to use): `scope_active` becomes `.active()`. Scopes must be
+/// associated functions taking and returning a `Query`; names colliding with
+/// `Query` methods are compile errors. Plain `Model::scope_x(query)` calls
+/// work with or without this macro.
+///
+/// Generated paths point at `::rusticate` by default; override with
+/// `#[scopes(crate = "...")]` in exotic layouts.
+///
+/// # Examples
+///
+/// ```ignore
+/// use rusticate::{scopes, Model, Query};
+///
+/// #[scopes]
+/// impl User {
+///     pub fn scope_active(query: Query<User>) -> Query<User> {
+///         query.where_eq("active", true)
+///     }
+/// }
+///
+/// // The generated `UserScopes` trait lives beside the impl: import it
+/// // (`use crate::UserScopes;`) and chain `.active()` on any `Query<User>`.
+/// ```
+#[proc_macro_attribute]
+pub fn scopes(attribute: TokenStream, item: TokenStream) -> TokenStream {
+    let parsed = parse_macro_input!(item as syn::ItemImpl);
+    scopes::expand(attribute, parsed)
+        .unwrap_or_else(|error| error.to_compile_error())
+        .into()
 }

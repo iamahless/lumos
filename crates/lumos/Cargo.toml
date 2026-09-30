@@ -8,7 +8,7 @@ description = "Lumos web framework: MVC, batteries-included, feature-flag driven
 
 [features]
 default = []
-orm = ["dep:rusticate"]
+orm = ["dep:rusticate", "lumos-core/orm"]
 migrations = ["orm"]
 validation = ["lumos-core/validation"]
 auth = ["lumos-core/auth", "validation"]

@@ -26,6 +26,14 @@ jobs:
       - uses: actions/checkout@v4
       - run: cargo test --workspace
 
+  orm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test -p rusticate
+      - run: cargo test -p lumos --features orm
+      - run: cargo test -p lumos-core --features orm
+
   features:
     runs-on: ubuntu-latest
     strategy:

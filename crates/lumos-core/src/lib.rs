@@ -5,12 +5,14 @@
 //! directly; everything public here is re-exported from there, plus the
 //! `routes!` / `group!` macros and `#[controller]` codegen.
 //!
-//! # Feature flags (pure wiring in Phase 1)
+//! # Feature flags
 //!
-//! `validation`, `auth`, `views`, `cache`, `queue`, `jsonapi`,
-//! `jsonapi-lite`, and `http-cache` exist so the facade's feature matrix is
-//! real and CI-testable from day one; their modules land in later phases.
-//! `jsonapi` and `jsonapi-lite` are mutually exclusive (compile error).
+//! `orm` maps `rusticate::Error` onto [`AppError`] (`NotFound` → 404,
+//! `UniqueViolation` → 409, the rest → 500). `validation`, `auth`, `views`,
+//! `cache`, `queue`, `jsonapi`, `jsonapi-lite`, and `http-cache` exist so
+//! the facade's feature matrix is real and CI-testable from day one; their
+//! modules land in later phases. `jsonapi` and `jsonapi-lite` are mutually
+//! exclusive (compile error).
 //!
 //! # Example
 //!

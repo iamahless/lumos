@@ -380,6 +380,37 @@ impl AppError {
     }
 }
 
+/// Maps ORM failures onto HTTP statuses: missing rows → `404`, unique
+/// violations → `409`, everything else → `500` (operator context preserved
+/// in `Display`, never rendered to clients).
+///
+/// Available with the `orm` feature, so `?` converts `rusticate::Error`
+/// directly in controller actions.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[cfg(feature = "orm")]
+/// # {
+/// use lumos_core::AppError;
+///
+/// let error = AppError::from(rusticate::Error::not_found("user 42"));
+/// assert_eq!(error.status_code(), lumos_core::StatusCode::NOT_FOUND);
+/// let error = AppError::from(rusticate::Error::UniqueViolation("email".to_string()));
+/// assert_eq!(error.status_code(), lumos_core::StatusCode::CONFLICT);
+/// # }
+/// ```
+#[cfg(feature = "orm")]
+impl From<rusticate::Error> for AppError {
+    fn from(error: rusticate::Error) -> Self {
+        match &error {
+            rusticate::Error::NotFound(detail) => Self::not_found(detail.clone()),
+            rusticate::Error::UniqueViolation(detail) => Self::conflict(detail.clone()),
+            _ => Self::internal(error.to_string()),
+        }
+    }
+}
+
 impl IntoResponse for AppError {
     /// Renders the standard [`ErrorDocument`] with this error's status code.
     ///
