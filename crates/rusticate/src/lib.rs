@@ -1,6 +1,6 @@
 //! Rusticate: an Eloquent-inspired ORM for Rust.
 //!
-//! Standalone by design — this crate depends on nothing from `lumos-core`,
+//! This standalone crate depends on nothing from `lumos-core`,
 //! so it works in any Tokio application. The `lumos` facade re-exports it
 //! behind the `orm` feature and maps [`Error`] onto HTTP statuses
 //! (`NotFound` → 404, `UniqueViolation` → 409, everything else → 500).

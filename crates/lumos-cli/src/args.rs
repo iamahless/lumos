@@ -3,7 +3,7 @@
 //! Grammar: `lumos <command> [positionals] [--flag[=value]] [-- passthrough]`.
 //! Flags take `--flag value` or `--flag=value`; `-h`/`--help` and `-V`/
 //! `--version` work globally and per-command; `--` ends parsing (only
-//! `serve` accepts passthrough). The parser checks syntax only — name
+//! `serve` accepts passthrough). The parser checks syntax only. Name
 //! validity and value ranges belong to the commands.
 //!
 //! # Examples
@@ -250,7 +250,7 @@ struct RawArgs {
 impl RawArgs {
     /// Splits raw tokens. `--name=value` and `--name value` both work;
     /// bare `--flag` records `None`; single `-x` (except `-h`) is rejected
-    /// (only `--force` has no short form — keep flags explicit).
+    /// (`--force` has no short form, which keeps flags explicit).
     fn split(tokens: &[String]) -> Result<Self, CliError> {
         let mut args = Self::default();
         let mut rest = tokens.iter().peekable();

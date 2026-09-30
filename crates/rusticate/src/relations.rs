@@ -1,7 +1,7 @@
 //! Relationships: [`HasMany`], [`BelongsTo`], and eager loading.
 //!
 //! Relation fields hold *loaded* data only. Lazy queries come from generated
-//! per-relation methods taking a target — `user.posts(&db)` returns a full
+//! per-relation methods taking a target. `user.posts(&db)` returns a full
 //! [`Query`](crate::Query) pre-filtered to the parent, so every builder
 //! method (`.where_eq`, `.paginate`, [`.on(&tx)`](crate::Query::on)) works
 //! unchanged. `to-many` relations also get `create_posts`-style methods that

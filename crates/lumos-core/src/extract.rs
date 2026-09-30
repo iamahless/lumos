@@ -5,7 +5,7 @@
 //! body → `400`, wrong content type → `415`). [`Path`], [`Query`], and
 //! [`State`] are axum's extractors, re-exported for a single import surface.
 //!
-//! Escape hatch: axum's own `Json` keeps working inside Lumos handlers; it
+//! Axum's own `Json` keeps working inside Lumos handlers. It
 //! simply renders axum's default error shape instead of Lumos's.
 
 pub use axum::extract::{Path, Query, State};
@@ -75,7 +75,7 @@ where
 
 /// Maps axum's JSON rejections onto the Lumos taxonomy. Every arm is
 /// explicit: if axum adds a variant, this fails to compile until the new
-/// case is classified — never silently misclassified.
+/// case is classified and never silently misclassified.
 fn map_json_rejection(rejection: JsonRejection) -> crate::AppError {
     match rejection {
         JsonRejection::JsonDataError(error) => {

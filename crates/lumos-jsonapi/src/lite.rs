@@ -1,6 +1,7 @@
 //! Simplified JSON:API rendering (the `jsonapi-lite` flag).
 //!
-//! Same [`Resource`] trait, same negotiation, same sort/filter/page — but
+//! This mode uses the same [`Resource`] trait, negotiation, sorting, filtering, and pagination,
+//! but
 //! documents stay flat: full attributes, linkage-only relationships, no
 //! compound `included`, no sparse fieldsets. Requesting `include` or
 //! `fields` is a 400 naming the flag (`jsonapi-lite` trades those features
@@ -176,7 +177,7 @@ pub fn collection_memory<T: Resource>(
 /// Renders a newly created resource as `201` with a `Location` header.
 ///
 /// Behaves like [`single`] plus the creation status and location. An
-/// invalid location is a 500 — a 201 without `Location` must never ship.
+/// invalid location is a 500. A 201 without `Location` is invalid.
 ///
 /// # Examples
 ///

@@ -82,7 +82,7 @@ pub enum Error {
     Config(String),
 
     /// The query itself is invalid: bad identifier, empty update, illegal
-    /// pagination arguments. Never a database failure — the SQL was never sent.
+    /// pagination arguments. The SQL was never sent, so this is not a database failure.
     #[error("invalid query: {0}")]
     InvalidQuery(String),
 

@@ -1,5 +1,5 @@
-//! The blog tour on lumos-testing: the whole product over an in-memory
-//! database — login/logout, post CRUD, comments, validation, auth splits,
+//! These tests exercise the blog over an in-memory database. They cover
+//! login/logout, post CRUD, comments, validation, auth splits,
 //! negotiation, and collection queries.
 
 use blog::database::migrations::{CreateComments, CreatePosts, CreateUsers};

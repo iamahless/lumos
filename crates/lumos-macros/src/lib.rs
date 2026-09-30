@@ -31,7 +31,7 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ImplItem, Item};
 /// | `destroy` | `DELETE`  | `/{id}`|
 ///
 /// Only `pub` convention methods become routes, and only for methods that
-/// exist — a controller with just `index` and `show` gets exactly two
+/// exist. A controller with just `index` and `show` gets exactly two
 /// routes. Actions must take `&self`, must not be generic, and may be
 /// `async` or sync; their parameters are forwarded as axum extractors and
 /// their return values must implement `IntoResponse` (typically

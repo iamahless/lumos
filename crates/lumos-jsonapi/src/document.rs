@@ -11,7 +11,7 @@
 //! per spec), and self/first/last/prev/next collection links. Sparse
 //! fieldsets filter attributes and relationships alike: a name must appear
 //! in `fields[type]` to be rendered. `include` targets the app did not load
-//! are 400s — linkage-only includes would silently under-deliver.
+//! are 400s. Linkage-only includes would silently under-deliver.
 //!
 //! # Examples
 //!
@@ -147,7 +147,7 @@ pub fn single<T: Resource>(resource: &T, query: &ApiQuery) -> ApiResult<lumos_co
 ///
 /// `items` is exactly this page (the app pages in SQL); `total` is the
 /// full filtered count for link building. Query paths validate against the
-/// page items — an empty page validates nothing and renders empty data.
+/// page items. An empty page validates nothing and renders empty data.
 /// For fully in-memory datasets see [`collection_memory`].
 ///
 /// # Examples
@@ -241,7 +241,7 @@ pub fn collection_memory<T: Resource>(
 /// Renders a newly created resource as `201` with a `Location` header.
 ///
 /// Behaves like [`single`] plus the creation status and location. An
-/// invalid location is a 500 — a 201 without `Location` must never ship.
+/// invalid location is a 500. A 201 without `Location` is invalid.
 ///
 /// # Examples
 ///

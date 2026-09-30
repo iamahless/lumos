@@ -4,8 +4,8 @@
 //! [`ApiQuery`] in handlers, and render with `single` / `collection` /
 //! `collection_memory` / `created`. Opted-in routes negotiate strictly:
 //! `Accept` must allow `application/vnd.api+json` (406 otherwise),
-//! write bodies must declare it (415 otherwise), and every response —
-//! errors included — carries the JSON:API content type plus `Vary: Accept`.
+//! write bodies must declare it (415 otherwise), and every response, including
+//! errors, carries the JSON:API content type plus `Vary: Accept`.
 //!
 //! # Feature flags
 //!

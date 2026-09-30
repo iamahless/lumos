@@ -3,7 +3,7 @@
 //! [`Log::init`] installs a default subscriber (human-readable `fmt` output
 //! filtered by `RUST_LOG`, defaulting to `info`). The `info`/`warn`/`error`/
 //! `debug` helpers cover plain-string logging; for formatted messages and
-//! spans, use `tracing`'s macros directly — that is the supported escape
+//! spans, use `tracing`'s macros directly. That is the supported direct-access
 //! hatch, and replacing the subscriber wholesale works the same way.
 
 use crate::Result;

@@ -11,7 +11,7 @@
 //! indexes, and uniques. Each migration runs inside a transaction on
 //! Postgres/SQLite; on MySQL (where DDL implicitly commits) it runs direct.
 //!
-//! Migration lists are explicit slices (`&[&dyn Migration]`) — no
+//! Migration lists are explicit slices (`&[&dyn Migration]`). There is no
 //! auto-discovery magic, mirroring explicit provider registration.
 
 use async_trait::async_trait;
@@ -634,7 +634,7 @@ impl Schema {
         }
     }
 
-    /// Returns the underlying target (escape hatch for custom DDL).
+    /// Returns the underlying target for custom DDL.
     ///
     /// # Examples
     ///
@@ -732,7 +732,7 @@ impl Schema {
     }
 
     /// Adds columns to an existing table (`ALTER TABLE ... ADD COLUMN` per
-    /// column; auto-increment keys are rejected — they only make sense at
+    /// column; auto-increment keys are rejected because they only make sense at
     /// creation).
     ///
     /// # Examples
@@ -773,7 +773,7 @@ impl Schema {
         Ok(())
     }
 
-    /// Drops a table (missing tables are an error — see [`drop_if_exists`](Schema::drop_if_exists)).
+    /// Drops a table. Missing tables are an error; see [`drop_if_exists`](Schema::drop_if_exists).
     ///
     /// # Examples
     ///
@@ -1206,7 +1206,7 @@ impl Migrator {
     }
 
     /// Rolls back the last `batches` batches (each batch in reverse order).
-    /// Migrations missing from the slice fail explicitly — pass them all.
+    /// Migrations missing from the slice fail explicitly. Pass them all.
     ///
     /// # Examples
     ///
@@ -1457,7 +1457,7 @@ impl Migrator {
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
             }
             // `tablename` is of type `name`, which the `Any` driver cannot
-            // return — cast to text.
+            // return, then cast to text.
             Dialect::Postgres => {
                 "SELECT CAST(tablename AS TEXT) AS name FROM pg_tables WHERE schemaname = 'public'"
             }

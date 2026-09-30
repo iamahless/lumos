@@ -6,7 +6,7 @@
 //! (method + relative path + action per convention method that exists);
 //! the app mounts them into a [`RouteRegistry`] next to the real mounts,
 //! plus manual [`RouteRegistry::route`] calls for hand-written routes.
-//! `route:list` renders whatever was registered — raw axum routes never
+//! `route:list` renders whatever was registered. Raw axum routes do not
 //! touch are invisible by design, never guessed.
 //!
 //! # Examples

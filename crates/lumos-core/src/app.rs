@@ -227,7 +227,7 @@ impl Application {
 
     /// Consumes the application and returns its router.
     ///
-    /// Escape hatch for tests (in-process requests without binding a port),
+    /// Runs in-process requests for tests without binding a port.
     /// custom servers, and embedding Lumos routers in larger axum apps.
     ///
     /// # Examples

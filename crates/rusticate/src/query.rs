@@ -7,7 +7,7 @@
 //! transaction with [`.on(&tx)`](Query::on).
 //!
 //! Identifiers from user code are validated when SQL renders (before any
-//! I/O); values always bind — the only interpolated literals are `NULL`,
+//! I/O); values always bind. The only interpolated literals are `NULL`,
 //! `LIMIT`/`OFFSET` integers (digits-only, injection-proof, and required
 //! inline for MySQL prepared-statement compatibility), and the `0 = 1`
 //! an empty `where_in` degrades to.
@@ -39,7 +39,7 @@ enum Order {
 
 /// Query builder for model `M`. See the [module docs](self) for the flow.
 ///
-/// Cloning is cheap (shared target, cloned conditions) — [`paginate`](Query::paginate)
+/// Cloning is cheap because targets are shared and conditions are cloned. [`paginate`](Query::paginate)
 /// clones internally to count and fetch from the same base.
 ///
 /// # Examples
@@ -188,7 +188,7 @@ impl<M: Model> Query<M> {
     }
 
     /// Adds `column IN (...)`. An empty set renders `0 = 1` (matches nothing),
-    /// mirroring Eloquent — never invalid `IN ()` SQL.
+    /// mirroring Eloquent and never producing invalid `IN ()` SQL.
     ///
     /// # Examples
     ///
@@ -701,7 +701,7 @@ impl<M: Model> Query<M> {
             return Err(Error::invalid_query("page must be at least 1"));
         }
         // `COUNT(*)` never fails here without failing the fetch below too,
-        // and never returns negative — but neither fact is trusted blindly.
+        // and never returns negative, but neither fact is trusted blindly.
         let total = self.count().await?.max(0) as u64;
         let mut items = self.clone();
         items.limit = Some(per_page);

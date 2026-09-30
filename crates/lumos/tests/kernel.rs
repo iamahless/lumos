@@ -2,7 +2,7 @@
 //!
 //! Covers MVC dispatch (`#[controller]` + `routes!`), error documents,
 //! extractors, container, config, providers, middleware, and response
-//! helpers — all via in-process requests (no sockets).
+//! helpers. All requests are in process, without sockets.
 
 use std::sync::{Arc, Mutex};
 

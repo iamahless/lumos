@@ -74,7 +74,7 @@ impl CliError {
         self.code
     }
 
-    /// The stderr message (possibly empty — see [`CliError::with_code`]).
+    /// The stderr message, which may be empty; see [`CliError::with_code`].
     ///
     /// # Examples
     ///

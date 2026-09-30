@@ -5,7 +5,7 @@
 //! `Accept` to allow [`JSON_API_MIME`] (406 otherwise, media-type
 //! parameters rejected), require write bodies to declare it as
 //! `Content-Type` (415 otherwise), and always answer with the JSON:API
-//! content type plus `Vary: Accept` — errors included, via [`JsonApiError`].
+//! content type plus `Vary: Accept`, including errors via [`JsonApiError`].
 //! Routes that never touch this module negotiate nothing.
 //!
 //! # Examples
@@ -223,7 +223,7 @@ impl IntoResponse for JsonApiError {
 ///
 /// Extraction requires `Accept` ([`check_accept`]) and an exact JSON:API
 /// `Content-Type` ([`check_content_type`]), parses the envelope, checks
-/// `data.type` against `T::TYPE` (409 on mismatch — the spec's conflict),
+/// `data.type` against `T::TYPE` (409 on mismatch, the spec's conflict),
 /// and deserializes `data.attributes` into `T`. Missing `data`/`type` /
 /// `attributes`, non-object shapes, bulk arrays, invalid JSON, and
 /// over-limit bodies are 400s.

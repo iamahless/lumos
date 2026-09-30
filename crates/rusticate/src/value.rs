@@ -2,7 +2,7 @@
 //!
 //! [`BindValue`] is the only thing ever sent to the database: every field
 //! type encodes into it ([`EncodeField`]), and every bind placeholder is
-//! filled from it with its concrete type — so backend drivers always see
+//! filled from it with its concrete type, so backend drivers always see
 //! exact types, on every dialect. Decoding ([`DecodeField`]) goes the other
 //! way, with small documented coercion chains where backends legitimately
 //! differ (integer widths, boolean storage, timestamp representations).
@@ -80,7 +80,7 @@ impl BindValue {
 ///
 /// This is infallible by design: every supported type has an exact portable
 /// form. Types without one (`u64`, `i128`, arbitrary `Serialize`) have no
-/// impl — attempting them is a compile error pointing here, not a runtime
+/// impl. Attempting them is a compile error pointing here, not a runtime
 /// surprise. (JSON casts use [`encode_json`], which can fail honestly.)
 ///
 /// # Examples
@@ -465,13 +465,13 @@ pub fn encode_display<T: std::fmt::Display>(value: &T) -> BindValue {
 
 /// Decodes a field value from a result row by column name.
 ///
-/// Decoding is name-based (robust to column order) and strict by default,
+/// Decoding is name-based, so column order does not matter, and strict by default,
 /// with narrow documented coercions where backends genuinely differ.
 /// Integers arrive in one attempt: the `Any` driver widens every integer
-/// width (`INT2`/`INT4`/`INT8`, `TINYINT`–`BIGINT`, SQLite's dynamic
+/// width (`INT2`/`INT4`/`INT8`, `TINYINT` through `BIGINT`, SQLite's dynamic
 /// `INTEGER`) into `i64`, and narrower field types range-check from there.
 /// `0`/`1` decode to `bool`; timestamps, UUIDs, and JSON decode from their
-/// text forms (the query builder `CAST`s those columns to text on read —
+/// text forms (the query builder `CAST`s those columns to text on read;
 /// the `Any` driver cannot return them natively).
 ///
 /// # Examples
@@ -548,7 +548,7 @@ impl DecodeField for bool {
 impl DecodeField for f64 {
     /// Decodes floats (`REAL` widens to `DOUBLE` in the driver), plus
     /// integers (SQLite `REAL` columns may hold integer values; large
-    /// integers may lose precision — documented, not silent).
+    /// integers may lose precision; this is documented rather than silent).
     fn decode_field(row: &AnyRow, column: &str) -> Result<Self> {
         if let Ok(value) = row.try_get::<f64, _>(column) {
             return Ok(value);

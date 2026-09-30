@@ -455,7 +455,7 @@ impl Observer<User> for RecordingObserver {
     async fn created(&self, target: &Target, user: &User) -> Result<()> {
         self.log.order.lock().unwrap().push("created".to_string());
         // Hooks query through the write's own target: inside a transaction
-        // this sees uncommitted rows on the same connection (no deadlock —
+        // this sees uncommitted rows on the same connection (no deadlock;
         // dispatch holds no connection lock across user code).
         let count = User::query(target).count().await?;
         self.log.counts_seen.lock().unwrap().push(count);

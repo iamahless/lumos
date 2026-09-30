@@ -1,8 +1,8 @@
 # Lumos
 
-A lightweight, MVC, batteries-included Rust web framework with an Eloquent-inspired ORM. Minimal by default, feature-flag driven, and JSON:API-capable — built so a Laravel/Lumen developer feels at home while the framework stays idiomatic Rust: no runtime reflection, no global mutable state, all magic at compile time via proc-macros.
+Lumos is an MVC Rust web framework with an Eloquent-inspired ORM. It is minimal by default, uses feature flags for optional capabilities, and supports JSON:API. Its API is familiar to Laravel and Lumen developers while remaining idiomatic Rust: it uses no runtime reflection or global mutable state, and proc macros generate framework code at compile time.
 
-> **Status: Phase 7 — testing helpers.** On top of Phase 6: `lumos-testing` (`TestDb` with migrate/seed/reset, `TestClient` with a cookie jar, chainable `TestResponse` assertions, `factory!` re-export), and the blog suite ported onto it as proof.
+> Status: Phase 7, testing helpers. `lumos-testing` provides `TestDb` for migration, seeding, and reset; `TestClient` with a cookie jar; chainable `TestResponse` assertions; and a `factory!` re-export. The blog suite uses these helpers.
 
 ## Quickstart
 
@@ -38,12 +38,17 @@ async fn main() -> lumos::Result<()> {
 | `lumos-testing` | Test helpers: `TestDb`, `TestClient`, response assertions.               |
 | `lumos-cli`     | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed.   |
 
-Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
-`lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred:
-sort/filter are structured values apps map onto queries themselves);
-`lumos-cli` → `{lumos-core, rusticate}` (runtime glue; the parser and
-generators are dependency-free); `lumos-core` → nothing internal;
-`rusticate` → nothing internal.
+Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`; `lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred: sort/filter are structured values apps map onto queries themselves); `lumos-cli` → `{lumos-core, rusticate}` (runtime glue; the parser and generators are dependency-free); `lumos-core` → nothing internal; `rusticate` → nothing internal.
+
+## Documentation
+
+The reference guide expands on this overview:
+
+- [Framework architecture](docs/architecture.md) explains crate ownership, dependency direction, and extension boundaries.
+- [Building an application](docs/building-an-app.md) covers configuration, providers, controllers, routing, migrations, and the CLI.
+- [Data APIs and testing](docs/data-apis-and-testing.md) covers Rusticate, JSON:API, authentication, and in-process tests.
+
+The runnable [blog example](apps/blog/README.md) is the end-to-end reference application. Its HTTP test suite is the best source for concrete behavior at the protocol boundary.
 
 ## Feature flags
 
@@ -61,9 +66,7 @@ generators are dependency-free); `lumos-core` → nothing internal;
 | `jsonapi`      | no      | Full JSON:API v1.1 (implies `orm`)          |
 | `jsonapi-lite` | no      | Simplified JSON:API (implies `orm`)         |
 
-`jsonapi` + `jsonapi-lite` together is a compile error. Every flag
-compiles standalone; CI checks each flag, the all-safe set, and the
-exclusivity violation.
+`jsonapi` + `jsonapi-lite` together is a compile error. Every flag compiles standalone; CI checks each flag, the all-safe set, and the exclusivity violation.
 
 ## MVC in 30 seconds
 
@@ -90,10 +93,7 @@ let api: Router = routes! {
 };
 ```
 
-`#[controller]` on the struct generates `from_container` (DI); on the impl
-block it generates `routes()` mapping `index/show/store/update/destroy` to
-`GET/POST/PUT+PATCH/DELETE` on `/` and `/{id}`. Only the `pub` convention
-methods you write become routes.
+`#[controller]` on the struct generates `from_container` (DI); on the impl block it generates `routes()` mapping `index/show/store/update/destroy` to `GET/POST/PUT+PATCH/DELETE` on `/` and `/{id}`. Only the `pub` convention methods you write become routes.
 
 ## ORM in 30 seconds
 
@@ -128,12 +128,7 @@ db.transaction(|tx| async move {
 }).await?;
 ```
 
-One implementation serves SQLite, Postgres, and MySQL (backend chosen
-from the connection URL); `rusticate::Error` maps onto HTTP statuses
-(`NotFound` → 404, `UniqueViolation` → 409) so `?` converts directly in
-actions. Relations (`.with(["posts"])`), casts, scopes, observers,
-migrations, seeders, and factories are all in; see the `rusticate` crate
-docs for the full tour.
+One implementation serves SQLite, Postgres, and MySQL (backend chosen from the connection URL); `rusticate::Error` maps onto HTTP statuses (`NotFound` → 404, `UniqueViolation` → 409) so `?` converts directly in actions. Relations (`.with(["posts"])`), casts, scopes, observers, migrations, seeders, and factories are all in; see the `rusticate` crate docs for the full tour.
 
 ## CLI in 30 seconds
 
@@ -144,19 +139,14 @@ lumos serve --port 8080                 # cargo run with HOST/PORT set
 lumos make:controller Widget            # + make:model/migration/seeder/resource/middleware
 ```
 
-Commands that need your code — `migrate`, `migrate:rollback`,
-`migrate:status`, `db:seed`, `route:list` — run from the skeleton's own
-binary, pre-wired through `lumos_cli::AppContext`:
+Commands that need your code, `migrate`, `migrate:rollback`, `migrate:status`, `db:seed`, and `route:list`, run from the skeleton's own binary, pre-wired through `lumos_cli::AppContext`:
 
 ```sh
 cargo run --bin cli -- route:list
 cargo run --bin cli -- migrate
 ```
 
-`route:list` reads an explicit `RouteRegistry` you build next to each
-mount (axum routers can't be introspected, so raw axum routes stay
-invisible by design); the `#[controller]` macro's `route_entries()`
-keeps registry entries in sync with the routes it generates.
+`route:list` reads an explicit `RouteRegistry` you build next to each mount (axum routers can't be introspected, so raw axum routes stay invisible by design); the `#[controller]` macro's `route_entries()` keeps registry entries in sync with the routes it generates.
 
 ## Example app
 
@@ -170,7 +160,7 @@ cargo run -p blog                    # serves 127.0.0.1:3000
 cargo test -p blog                   # integration tour (in-memory DB)
 ```
 
-Its `tests/http.rs` walks login/logout, CRUD, 422s, the 401/403 split, 406/415 negotiation, 409 id mismatch, filters, sorting, pagination, and fieldsets — extend that tour when adding framework behavior.
+Its `tests/http.rs` covers login and logout, CRUD, 422 responses, the 401/403 split, 406/415 negotiation, 409 ID mismatch, filters, sorting, pagination, and fieldsets. Add coverage there when adding framework behavior.
 
 ## Testing
 
@@ -197,8 +187,7 @@ client
 db.reset(&["posts", "users"]).await?; // children first; sqlite ids restart
 ```
 
-`factory!` (from rusticate, re-exported) builds deterministic fixtures
-with sequence numbers; see the `lumos-testing` crate docs.
+`factory!` (from rusticate, re-exported) builds deterministic fixtures with sequence numbers; see the `lumos-testing` crate docs.
 
 ## Why each core dependency exists
 
@@ -206,7 +195,7 @@ with sequence numbers; see the `lumos-testing` crate docs.
 
 | Dependency            | Why                                                                                       |
 | --------------------- | ----------------------------------------------------------------------------------------- |
-| axum                  | Router, server, extractors. Pulls hyper + matchit transitively — never declared directly. |
+| axum                  | Router, server, and extractors. Pulls hyper and matchit transitively; neither is declared directly. |
 | tokio                 | Async runtime (`net`, `rt-multi-thread`, `macros`, `signal` only).                        |
 | serde                 | DTO/config (de)serialization.                                                             |
 | serde_json            | JSON bodies and error documents.                                                          |
@@ -223,18 +212,12 @@ with sequence numbers; see the `lumos-testing` crate docs.
 | argon2 (optional)     | Password hashing + session RNG behind `auth`; zero cost when off.                         |
 | askama (optional)     | Compile-time templates behind `views`; zero cost when off.                                |
 
-Deliberately absent: `hyper`/`matchit` (via axum), `sqlx` (`rusticate`
-only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only),
-`password-hash`/`getrandom` (via argon2's re-exports), `cookie`
-(hand-rolled parsing), `bytes` (via axum's body API). `mime` joined in
-Phase 4 (`lumos-jsonapi` negotiation); Phase 5 added none (the CLI's
-arg parser is hand-rolled, and `chrono` was already in the tree for
-migration timestamps).
+Deliberately absent: `hyper`/`matchit` (via axum), `sqlx` (`rusticate` only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only), `password-hash`/`getrandom` (via argon2's re-exports), `cookie` (hand-rolled parsing), `bytes` (via axum's body API). `mime` joined in Phase 4 (`lumos-jsonapi` negotiation); Phase 5 added none (the CLI's arg parser is hand-rolled, and `chrono` was already in the tree for migration timestamps).
 
 ## Contracts
 
 - Validation failures → `422`, never `400`. Malformed bodies → `400`, never `500`.
-- `401` is unauthenticated, `403` is forbidden — never confused.
+- `401` means unauthenticated. `403` means forbidden.
 - Every `201` carries a `Location` header (`created()` takes it as a required argument).
 - Every error renders the same `{ "errors": [...] }` document, JSON:API or not.
 - Models are never serialized directly (the `Resource` trait + `JsonApiResource` derive decide what clients see).

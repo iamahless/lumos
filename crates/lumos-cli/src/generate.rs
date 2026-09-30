@@ -1,6 +1,6 @@
 //! File generators: `make:*` renderers, the `new` template, and writing.
 //!
-//! Rendering is pure — every `render_*` returns paths plus content, so
+//! Rendering is pure. Every `render_*` returns paths plus content, so
 //! tests assert on strings without touching the filesystem.
 //! [`write_tree`] performs the IO: it creates parent directories, refuses
 //! to overwrite without `force`, and reports written paths. Generators

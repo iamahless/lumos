@@ -3,13 +3,13 @@
 //! Rusticate runs on sqlx's `Any` driver: one implementation serves SQLite,
 //! Postgres, and MySQL, with the backend chosen at runtime from the
 //! connection URL. [`Dialect`] centralizes every backend difference the ORM
-//! must know: identifier quoting, placeholder syntax (`$N` vs `?` — the `Any`
+//! must know: identifier quoting and placeholder syntax (`$N` vs `?`; the `Any`
 //! driver does not translate these), and `CAST` wrappers that let timestamp
 //! and JSON values bind as portable strings.
 //!
 //! Query execution always goes through a [`Target`]: either a [`DB`] pool or
 //! a [`Transaction`]. Builders own their target (cheap `Arc` clones, no
-//! lifetimes), and [`.on()`](crate::Query::on) overrides it —
+//! lifetimes). [`.on()`](crate::Query::on) overrides it,
 //! `User::query(&db).on(&tx)` runs inside the transaction.
 
 use std::sync::{Arc, RwLock};
@@ -51,7 +51,7 @@ pub enum Dialect {
 impl Dialect {
     /// Detects the dialect from a connection URL.
     ///
-    /// Unknown schemes are [`Error::Config`] naming the supported ones —
+    /// Unknown schemes are [`Error::Config`] naming the supported ones.
     /// never a silent default.
     ///
     /// # Examples
@@ -78,7 +78,7 @@ impl Dialect {
 
     /// Quotes an identifier: `"name"` (SQLite/Postgres) or `` `name` `` (MySQL).
     ///
-    /// Embedded quote characters are doubled (defense in depth — validated
+    /// Embedded quote characters are doubled (defense in depth; validated
     /// identifiers cannot contain them in the first place).
     ///
     /// # Examples
@@ -115,7 +115,7 @@ impl Dialect {
     }
 
     /// Formats a timestamp for binding: RFC 3339 with microseconds, except
-    /// MySQL, which gets naive `DATETIME(6)` layout (no zone designator —
+    /// MySQL, which gets naive `DATETIME(6)` layout (no zone designator;
     /// `DATETIME` carries none; values are UTC by convention).
     pub(crate) fn time_literal(&self, moment: &DateTime<Utc>) -> String {
         match self {
@@ -254,7 +254,7 @@ impl DB {
     /// Opens an isolated in-memory SQLite database (single connection, so
     /// the `:memory:` store is never split across pooled connections).
     ///
-    /// Intended for tests, doctests, and throwaway scripts — never production.
+    /// Intended for tests, doctests, and throwaway scripts, never production.
     ///
     /// # Examples
     ///
@@ -311,7 +311,7 @@ impl DB {
 
     /// Wraps an existing pool with an explicit dialect.
     ///
-    /// Escape hatch for custom pool options (timeouts, pool sizing, hooks):
+    /// Configures custom pool options such as timeouts, pool sizing, and hooks:
     /// configure `AnyPoolOptions` yourself, then hand the pool over.
     ///
     /// # Examples
@@ -358,7 +358,7 @@ impl DB {
 
     /// Returns the underlying pool.
     ///
-    /// Full escape hatch: anything sqlx can do directly stays possible.
+    /// Runs a closure with direct access to the underlying sqlx pool.
     ///
     /// # Examples
     ///
@@ -452,7 +452,7 @@ impl DB {
 
     /// Runs `run` inside a transaction: commit on `Ok`, rollback on `Err`.
     ///
-    /// The closure receives an owned [`Transaction`] (cheap clone —
+    /// The closure receives an owned [`Transaction`] (cheap clone;
     /// transactions are reference-counted handles); queries join it via
     /// [`.on(&tx)`](crate::Query::on) or take `&tx`/`tx` anywhere a target
     /// is accepted. A rollback failure is logged; the original error is
@@ -517,7 +517,7 @@ impl DB {
     }
 
     /// Renders the bind placeholder for 1-based `index` in this handle's
-    /// dialect — the portable way to write [`RawQuery`] SQL by hand.
+    /// dialect. This is the portable way to write [`RawQuery`] SQL by hand.
     ///
     /// # Examples
     ///
@@ -554,7 +554,7 @@ impl std::fmt::Debug for DB {
 /// An open transaction: dialect, database handle, and one serialized connection.
 ///
 /// Obtained from [`DB::begin`] (manual) or [`DB::transaction`] (automatic).
-/// Cheap to clone — clones share the transaction; queries serialize on its
+/// Cheap to clone. Clones share the transaction, and queries serialize on its
 /// connection, exactly as the database requires.
 ///
 /// Dropping an open transaction rolls it back (sqlx behavior); prefer
@@ -580,7 +580,7 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    /// Commits the transaction. Exactly once — a second call (or any later
+    /// Commits the transaction exactly once. A second call, or any later
     /// query) fails with [`Error::TransactionFinished`].
     ///
     /// Takes `&self`: interior state drives the once-only guarantee, so
@@ -711,7 +711,7 @@ impl std::fmt::Debug for Transaction {
 /// Where a query executes: a [`DB`] pool or a [`Transaction`].
 ///
 /// Every model, builder, relation, and raw entry point takes
-/// `impl Into<Target>`, so `&db` and `&tx` work interchangeably —
+/// `impl Into<Target>`, so `&db` and `&tx` work interchangeably.
 /// `User::find(&db, 1)` and `User::find(&tx, 1)` are the same method.
 /// Builders additionally offer [`.on(&tx)`](crate::Query::on) to retarget
 /// after construction.
@@ -980,7 +980,7 @@ fn apply_bind<'q>(
     }
 }
 
-/// Hand-written SQL with bound values — the ORM's escape hatch.
+/// Hand-written SQL with bound values for cases outside the ORM.
 ///
 /// Placeholders must be native to the dialect (`$N` on Postgres, `?`
 /// elsewhere; [`DB::placeholder`] renders them portably). Values bind with

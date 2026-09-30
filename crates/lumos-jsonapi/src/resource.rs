@@ -1,8 +1,8 @@
-//! API resources: the seam between domain types and JSON:API documents.
+//! API resources define the boundary between domain types and JSON:API documents.
 //!
 //! A [`Resource`] exposes a JSON:API type name, a string id, serializable
 //! attributes, and typed relationships. Implement it by hand (the escape
-//! hatch — full control, no codegen) or derive it with
+//! hatch for full control and no code generation, or derive it with
 //! `JsonApiResource` (fields become attributes unless marked otherwise).
 //! Models are never serialized directly: the resource decides what clients
 //! see.
@@ -76,7 +76,7 @@ pub type AttributeMap = serde_json::Map<String, Value>;
 /// `TYPE` is the static JSON:API type (`"users"`); [`Resource::resource_type`]
 /// exposes it through `&dyn Resource` for mixed rendering. Attributes
 /// serialize field-by-field so one bad field fails loudly with its name.
-/// Relationships return linkage plus whatever the app loaded — renderers
+/// Relationships return linkage plus whatever the app loaded. Renderers
 /// never fetch.
 ///
 /// # Examples
@@ -116,7 +116,7 @@ pub trait Resource {
     /// JSON:API id: always a string, even for integer keys.
     fn resource_id(&self) -> String;
 
-    /// Serializable attributes (never `type`/`id` — those are structural).
+    /// Serializable attributes. `type` and `id` are structural fields.
     /// A field that cannot serialize fails the render as a 500 naming it.
     fn attributes(&self) -> Result<AttributeMap>;
 
@@ -534,7 +534,7 @@ impl<T: Resource> ToMany<T> {
     /// }
     ///
     /// let tags = ToMany::new(vec![ToOne::loaded(Tag)]);
-    /// assert_eq!(tags.targets()[0].id, "3");
+    /// assert_eq!(tags.targets()[0].id(), "3");
     /// ```
     pub fn targets(&self) -> Vec<RelationTarget<'_>> {
         self.items.iter().map(ToOne::as_target).collect()

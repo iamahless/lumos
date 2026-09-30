@@ -2,10 +2,10 @@
 //!
 //! Providers wire an application in two phases:
 //!
-//! 1. [`ServiceProvider::register`] (synchronous) — bind services into the
+//! 1. [`ServiceProvider::register`] (synchronous): bind services into the
 //!    [`Container`](crate::Container) and mount routers. Runs immediately
 //!    when the provider is registered, in registration order.
-//! 2. [`ServiceProvider::boot`] (async) — runs after *all* providers have
+//! 2. [`ServiceProvider::boot`] (async): runs after *all* providers have
 //!    registered, so every binding exists before anyone uses one.
 //!
 //! Registration is explicit (`app.register(MyProvider)`); there is no
@@ -47,7 +47,7 @@ pub trait ServiceProvider: Send + Sync {
     /// Binds services into the container and mounts routers.
     ///
     /// Called synchronously from [`Application::register`], in registration
-    /// order. Only bind here — never resolve bindings owned by another
+    /// order. Only bind here. Do not resolve bindings owned by another
     /// provider (it may not have registered yet); do that in [`boot`](ServiceProvider::boot).
     fn register(&self, app: &mut Application) -> Result<()>;
 

@@ -3,7 +3,7 @@
 //! [`factory!`] defines a fixture builder for a model: a `definition(seq)`
 //! function producing a [`Changeset`](crate::Changeset), with sequence
 //! numbers making every instance unique (`user1@example.com`,
-//! `user2@example.com`, …). No fake-data dependency — sequences plus explicit
+//! `user2@example.com`, …). There is no fake-data dependency. Sequences and explicit
 //! values cover the deterministic cases; random data comes from the caller's
 //! own generator inside `definition` when needed.
 //!
@@ -164,7 +164,7 @@ macro_rules! factory {
 /// }
 /// ```
 ///
-/// Invoke seeders explicitly — from a migration's `up`, a CLI command, or
+/// Invoke seeders explicitly from a migration's `up`, a CLI command, or
 /// test setup. For all-or-nothing seeding, call `db.transaction` inside
 /// `run` and target the transaction.
 #[async_trait]

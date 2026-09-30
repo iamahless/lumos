@@ -2,7 +2,7 @@
 //!
 //! Derive [`Template`] on a struct (inline `source` or a file under
 //! `templates/`), return [`View`] from a handler, and the response is `200`
-//! with `Content-Type: text/html`. Rendering is compile-time codegen — a
+//! with `Content-Type: text/html`. Rendering uses compile-time code generation, a
 //! template that fails to compile fails the build, never a request. Runtime
 //! render failures (a fallible filter, a broken `Write`) become 500s with
 //! the cause logged and a generic detail sent to clients.

@@ -20,7 +20,7 @@
 //!
 //! - Validation failures → `422`, never `400`.
 //! - Malformed request bodies → `400`, never `500`.
-//! - `401` means unauthenticated, `403` means forbidden — never confused.
+//! - `401` means unauthenticated. `403` means forbidden.
 //! - `500` responses never carry internal details; the context is logged via
 //!   `tracing` and visible in `Display`/`Debug` for operators only.
 
@@ -55,7 +55,7 @@ pub type Result<T> = std::result::Result<T, AppError>;
 ///
 /// Each variant maps to exactly one HTTP status code (see
 /// [`status_code`](AppError::status_code)). The enum is [`non_exhaustive`],
-/// so matching downstream requires a wildcard arm — new variants may appear
+/// so matching downstream requires a wildcard arm. New variants may appear
 /// in minor releases.
 ///
 /// `AppError` converts into a response via [`IntoResponse`], which renders

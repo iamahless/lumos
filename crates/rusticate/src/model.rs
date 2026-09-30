@@ -7,7 +7,7 @@
 //! lifecycle method as defaults, so models work the moment they compile.
 //!
 //! Every entry point takes `impl Into<Target>`: `&db` and `&tx`
-//! interchangeably. There are no globals — the connection is always explicit.
+//! interchangeably. There are no globals. The connection is always explicit.
 
 use std::collections::BTreeMap;
 use std::future::Future;
@@ -23,7 +23,7 @@ use sqlx::Row as _;
 
 /// A paginated result set.
 ///
-/// `last_page` is the exact ceiling (`0` when empty — arithmetically honest
+/// `last_page` is the exact ceiling (`0` when empty; this makes the empty case
 /// rather than Laravel's minimum of 1); `has_more` tells clients whether to
 /// render a next link.
 ///
@@ -291,8 +291,8 @@ fn json_to_bind(value: serde_json::Value) -> Result<BindValue> {
 /// ```
 ///
 /// The derive generates metadata, hydration, changesets, timestamps, and
-/// relation loading. Everything below — querying, creating, saving,
-/// deleting — is provided as default methods.
+/// relation loading. Querying, creating, saving, and deleting are provided as
+/// default methods.
 ///
 /// # Soft deletes
 ///
@@ -302,7 +302,7 @@ fn json_to_bind(value: serde_json::Value) -> Result<BindValue> {
 /// [`force_delete`](Model::force_delete) for a real `DELETE`.
 ///
 /// Native `async fn` (not `async_trait`): this trait is never used as a
-/// trait object, and every future is `Send` in practice — the only captured
+/// trait object, and every future is `Send` in practice. The only captured
 /// types are `Target`, `Changeset`, and model references, all `Send`.
 #[allow(async_fn_in_trait)]
 pub trait Model: Sized + Send + Sync + 'static {
@@ -733,7 +733,7 @@ pub trait Model: Sized + Send + Sync + 'static {
         Self::create(target, Changeset::from_struct(data)?).await
     }
 
-    /// Persists this instance's columns (`UPDATE`, never `INSERT` — creation
+    /// Persists this instance's columns (`UPDATE`, never `INSERT`; creation
     /// goes through [`create`](Model::create), keeping the two paths explicit).
     ///
     /// Flow: stamp `updated_at` → `saving`/`updating` hooks → `UPDATE` all

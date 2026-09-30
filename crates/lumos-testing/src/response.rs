@@ -47,7 +47,7 @@ impl TestResponse {
     /// Captures a response: status, headers, full body, lenient JSON.
     ///
     /// Empty and non-JSON bodies capture as `json() == None` rather than
-    /// erroring — asserting JSON-ness is the assertions' job.
+    /// erroring. The assertions determine whether the response is JSON.
     ///
     /// # Examples
     ///

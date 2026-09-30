@@ -5,8 +5,8 @@
 
 /// Builds a router from resources and plain routes, in written order.
 ///
-/// Each item is either a `resource(...)` mount — delegating to the
-/// controller's generated `routes()` constructor — or a `route(...)` pair of
+/// Each item is either a `resource(...)` mount, which delegates to the
+/// controller's generated `routes()` constructor, or a `route(...)` pair of
 /// a path and an axum method router:
 ///
 /// ```rust
@@ -51,7 +51,7 @@ macro_rules! routes {
 ///
 /// Layers apply in written order (each `.layer` wraps the previous ones).
 /// Any axum layer works: `from_fn` middleware, tower layers, or closures
-/// from [`MiddlewareRegistry`](crate::MiddlewareRegistry) — though the
+/// from [`MiddlewareRegistry`](crate::MiddlewareRegistry), although the
 /// registry's [`apply`](crate::MiddlewareRegistry::apply) is usually clearer
 /// for named middleware.
 ///

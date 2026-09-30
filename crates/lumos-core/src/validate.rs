@@ -2,8 +2,8 @@
 //!
 //! Derive [`Validate`](validator::Validate) on a request struct, extract it
 //! with [`Validated`] (JSON bodies) or [`ValidatedQuery`] (query strings),
-//! and invalid input becomes [`AppError::Validation`] — status 422 with one
-//! `/data/attributes/{field}` entry per failure — while malformed input
+//! and invalid input becomes [`AppError::Validation`], status 422 with one
+//! `/data/attributes/{field}` entry per failure. Malformed input
 //! still fails earlier as 400. The free [`validate`] function covers
 //! non-extractor flows (services, tests, manual parsing).
 //!
@@ -126,7 +126,7 @@ where
 
 /// Validates `value`, mapping failures onto [`AppError::Validation`] (422).
 ///
-/// Use it wherever validation happens outside an extractor — services,
+/// Use it wherever validation happens outside an extractor, including services,
 /// manual parsing, tests.
 ///
 /// # Examples

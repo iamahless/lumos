@@ -1,6 +1,6 @@
 //! Lumos: a lightweight, MVC, batteries-included Rust web framework.
 //!
-//! Minimal by default — routing, request/response, and error handling — with
+//! Lumos includes routing, request/response handling, and error handling by default, with
 //! every other capability behind an opt-in feature flag:
 //!
 //! | Feature        | Enables                                              |

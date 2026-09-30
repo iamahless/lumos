@@ -3,7 +3,7 @@
 //! Passwords hash with argon2id ([`hash_password`]) and check with
 //! [`verify_password`]; both are synchronous and CPU-intensive, so handlers
 //! should call them inside `tokio::task::spawn_blocking`. Sessions are opaque
-//! 128-bit tokens kept in a [`SessionStore`] — [`MemorySessionStore`] ships
+//! 128-bit tokens kept in a [`SessionStore`]. [`MemorySessionStore`] ships
 //! in-core, custom stores implement the three-method trait. [`login`] mints a
 //! session, [`logout`] revokes it; the [`CurrentUser`] extractor guards
 //! routes (`401` when the token is missing, unknown, or expired) and
@@ -67,7 +67,7 @@ pub const SESSION_COOKIE: &str = "lumos_session";
 /// Hashes a password with argon2id default parameters.
 ///
 /// Returns the PHC-encoded hash (`$argon2id$...`), which embeds the
-/// algorithm, parameters, and salt — store it verbatim.
+/// algorithm, parameters, and salt. Store it verbatim.
 ///
 /// This is CPU-intensive by design; call it from
 /// `tokio::task::spawn_blocking` inside handlers. It fails only when the
@@ -113,7 +113,7 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
 
 /// An authenticated session: opaque token, owner, scopes, and expiry.
 ///
-/// Sessions are bearer credentials — whoever holds [`Session::token`]
+/// Sessions are bearer credentials. Whoever holds [`Session::token`]
 /// passes the [`CurrentUser`] guard until [`Session::expired`].
 /// [`logout`] revokes them early.
 ///
@@ -188,7 +188,7 @@ impl Session {
     }
 }
 
-/// Persistent session storage: the seam custom drivers implement.
+/// Persistent session storage implemented by custom drivers.
 ///
 /// All methods are `&self` so stores share across handlers behind `Arc`.
 /// Failures surface as [`AppError`]s (a downed Redis is a 500, not a 401).
@@ -219,7 +219,7 @@ pub trait SessionStore: Send + Sync {
 
 /// In-memory [`SessionStore`], guarded by an `RwLock`.
 ///
-/// Sessions vanish on restart and never replicate — fine for tests,
+/// Sessions vanish on restart and never replicate. This is suitable for tests,
 /// single-process apps, and as the reference driver implementation.
 ///
 /// # Examples
@@ -354,7 +354,7 @@ pub async fn logout(store: &dyn SessionStore, token: &str) -> Result<()> {
 }
 
 /// Mints a 128-bit session token as 32 hex chars. Draws from the OS CSPRNG
-/// through the same helper argon2 uses for salts — random bytes are random
+/// through the same helper argon2 uses for salts. Random bytes are random
 /// bytes; the `salt` name is password-hash's, not a constraint on use.
 fn new_token() -> Result<String> {
     let bytes = argon2::password_hash::try_generate_salt()

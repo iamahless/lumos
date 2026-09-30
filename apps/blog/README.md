@@ -1,6 +1,6 @@
 # Blog (Lumos example app)
 
-A JSON:API blog — users, posts, comments — touring the framework: `#[controller]` routing + `RouteRegistry`, rusticate models with relations, migrations, seeders, `Validated` inputs (422), session auth (401 vs 403), and JSON:API documents (filtering, sorting, pagination, sparse fieldsets, includes).
+This JSON:API blog has users, posts, and comments. It uses `#[controller]` routing and `RouteRegistry`, rusticate models with relations, migrations, seeders, `Validated` inputs (422), session authentication (401 vs 403), and JSON:API documents with filtering, sorting, pagination, sparse fieldsets, and includes.
 
 ## Run
 
@@ -13,8 +13,7 @@ cargo run -p blog                    # serves 127.0.0.1:3000 (migrates on boot)
 cargo run -p blog --bin cli -- route:list
 ```
 
-Seeded logins: `admin@example.com` / `password` and
-`ada@example.com` / `password`.
+Seeded logins: `admin@example.com` / `password` and `ada@example.com` / `password`.
 
 ## Try it
 

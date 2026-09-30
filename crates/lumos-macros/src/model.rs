@@ -1181,7 +1181,7 @@ fn validate_ident(name: &str, span: Span) -> syn::Result<()> {
     }
 }
 
-/// Parses a pre-validated name into an identifier (fallible — no panics).
+/// Parses a pre-validated name into an identifier. It is fallible and does not panic.
 fn ident_parse(name: &str, span: Span) -> syn::Result<syn::Ident> {
     syn::parse_str(name).map_err(|_| syn::Error::new(span, format!("invalid identifier {name:?}")))
 }
@@ -1240,7 +1240,7 @@ fn is_uuid(ty: &Type) -> bool {
 }
 
 /// Checks for `serde_json::Value` by final segment. A custom `Value` type
-/// would also match — harmless, since casting a text column to text is a no-op.
+/// would also match. This is harmless because casting a text column to text is a no-op.
 fn is_json_value(ty: &Type) -> bool {
     last_segment(ty).is_some_and(|name| name == "Value")
 }
@@ -1251,7 +1251,7 @@ fn is_bool(ty: &Type) -> bool {
 }
 
 /// Returns the final path segment of a type, if it is a path.
-/// (`Option<DateTime<Utc>>` yields `"Option"` — unwrap with
+/// (`Option<DateTime<Utc>>` yields `"Option"`; unwrap with
 /// [`option_inner`] first when classifying the inner type.)
 fn last_segment(ty: &Type) -> Option<String> {
     match ty {

@@ -1,6 +1,5 @@
-//! JSON:API resources: what clients see. Models are never serialized
-//! directly — these DTOs decide the wire shape (note the absent
-//! `password_hash` on [`ApiUser`]).
+//! JSON:API resources define the client-facing wire shape. Models are not
+//! serialized directly, and [`ApiUser`] omits `password_hash`.
 //!
 //! Write inputs live here too: small `Deserialize` structs with manual
 //! `Resource` impls (the `TYPE` const drives `JsonApiBody`'s type check),

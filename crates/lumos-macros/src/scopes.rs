@@ -2,7 +2,7 @@
 //! chainable query methods.
 //!
 //! Query scopes are ordinary associated functions taking and returning a
-//! `Query` — `User::scope_active(User::query(&db))` always works with zero
+//! `Query`. `User::scope_active(User::query(&db))` always works with zero
 //! machinery. This macro adds the Eloquent-style sugar: for each `pub fn
 //! scope_active(...)` in the impl block, it generates a `UserScopes` trait
 //! with an `.active()` method, so `User::query(&db).active().get()` reads

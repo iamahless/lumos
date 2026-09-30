@@ -2,14 +2,14 @@
 //!
 //! Implement [`Observer`] for a model, register it with [`DB::observe`](crate::DB),
 //! and hooks fire around every write through that handle (pool and
-//! transactions alike — the registry lives on the shared handle).
+//! transactions alike. The registry lives on the shared handle.
 //! Pre-write hooks (`creating`, `updating`, `saving`, `deleting`,
 //! `restoring`) receive `&mut` and may adjust the instance (stamp UUIDs,
 //! normalize fields); post-write hooks receive `&` (the row is already
 //! persisted, so mutations would be misleading).
 //!
 //! Every hook receives the current [`Target`](crate::Target), so hooks may
-//! themselves query — including on the same transaction the write runs in.
+//! themselves query, including on the transaction where the write runs.
 //! Hook dispatch never holds a connection lock while running user code, so
 //! this cannot deadlock (covered by test).
 
@@ -24,7 +24,7 @@ use crate::db::Target;
 use crate::model::Model;
 use crate::{Error, Result};
 
-/// Lifecycle hooks for model `M`. Every hook defaults to a no-op — implement
+/// Lifecycle hooks for model `M`. Every hook defaults to a no-op. Implement
 /// only what the model needs. Returning `Err` aborts the write (and fails
 /// the enclosing transaction, when any).
 ///
@@ -175,7 +175,7 @@ pub(crate) trait ErasedObserver: Send + Sync {
 }
 
 /// Adapts a typed observer to erased dispatch. The downcast cannot fail:
-/// entries are keyed by `TypeId` and only dispatched for their own model —
+/// entries are keyed by `TypeId` and are dispatched only for their own model.
 /// the error arm is unreachable defense, never a silent skip.
 struct Adapter<O, M> {
     observer: O,

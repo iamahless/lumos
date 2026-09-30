@@ -83,7 +83,7 @@ pub fn run(argv: &[String]) -> i32 {
 }
 
 /// Executes one project-local command, returning its stdout (possibly
-/// empty — `serve` streams through the child instead).
+/// empty. `serve` streams through the child instead.
 fn execute(command: Command) -> Result<String, CliError> {
     match command {
         Command::New { name, path, force } => {

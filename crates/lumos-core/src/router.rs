@@ -44,7 +44,7 @@ pub async fn serve(router: Router, address: &str) -> Result<()> {
 }
 
 /// Resolves on Ctrl-C (ignoring signal-subscription failures, which only
-/// happen on runtimes without signal support — where shutdown then falls
+/// happen on runtimes without signal support, where shutdown then falls
 /// back to task cancellation).
 async fn shutdown_signal() {
     let _ = tokio::signal::ctrl_c().await;

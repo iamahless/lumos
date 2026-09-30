@@ -388,7 +388,7 @@ impl TestRequest {
 
     /// Runs the request against `client`, jarring any `Set-Cookie`s.
     ///
-    /// A bad method literal or an unserializable body fails loudly —
+    /// A bad method literal or an unserializable body fails loudly.
     /// both are test bugs, never server behavior.
     ///
     /// # Examples
