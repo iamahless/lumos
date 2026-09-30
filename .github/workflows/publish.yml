@@ -42,7 +42,7 @@ jobs:
                     /^\[workspace\.package\]$/ { in_workspace_package = 1; next }
                     /^\[/ { in_workspace_package = 0 }
                     in_workspace_package && $1 == "version" {
-                      gsub(/\"/, "", $3)
+                      gsub(/"/, "", $3)
                       print $3
                       exit
                     }
