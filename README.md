@@ -2,7 +2,7 @@
 
 A lightweight, MVC, batteries-included Rust web framework with an Eloquent-inspired ORM. Minimal by default, feature-flag driven, and JSON:API-capable — built so a Laravel/Lumen developer feels at home while the framework stays idiomatic Rust: no runtime reflection, no global mutable state, all magic at compile time via proc-macros.
 
-> **Status: Phase 4 — JSON:API.** On top of Phase 3: `Resource` trait + `JsonApiResource` derive, strict per-route negotiation (406/415 + `Vary`), full v1.1 documents (linkage, deduped `included`, sparse fieldsets, sort/filter/page, spec pagination links) behind `jsonapi` and the flat subset behind `jsonapi-lite` (mutually exclusive), with vnd error documents — all in `lumos-jsonapi`, re-exported from the facade. CLI, testing helpers, and the example app land in Phases 5–7.
+> **Status: Phase 5 — CLI.** On top of Phase 4: the `lumos` developer CLI (`lumos-cli` lib + thin binary) — `new` scaffolds a runnable API skeleton, `serve` wraps `cargo run` with `HOST`/`PORT`, six `make:*` generators write controllers/models/migrations/seeders/resources/middleware, and app-linked `migrate` / `migrate:rollback` / `migrate:status` / `db:seed` / `route:list` run from the app's own binary via `AppContext` (the skeleton pre-wires it). The `#[controller]` macro now also emits `route_entries()` for an explicit `RouteRegistry`. Testing helpers and the example app land in Phases 6–7.
 
 ## Quickstart
 
@@ -36,12 +36,14 @@ async fn main() -> lumos::Result<()> {
 | `rusticate`     | Standalone ORM. Never depends on `lumos-core`.                            |
 | `lumos-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`).        |
 | `lumos-testing` | Test helpers (Phase 7).                                                  |
-| `lumos-cli`     | `lumos` developer binary (Phase 5).                                      |
+| `lumos-cli`     | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed.  |
 
 Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
 `lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred:
 sort/filter are structured values apps map onto queries themselves);
-`lumos-core` → nothing internal; `rusticate` → nothing internal.
+`lumos-cli` → `{lumos-core, rusticate}` (runtime glue; the parser and
+generators are dependency-free); `lumos-core` → nothing internal;
+`rusticate` → nothing internal.
 
 ## Feature flags
 
@@ -133,6 +135,29 @@ actions. Relations (`.with(["posts"])`), casts, scopes, observers,
 migrations, seeders, and factories are all in; see the `rusticate` crate
 docs for the full tour.
 
+## CLI in 30 seconds
+
+```sh
+cargo install --path crates/lumos-cli   # ships the `lumos` binary
+lumos new blog && cd blog               # runnable API skeleton
+lumos serve --port 8080                 # cargo run with HOST/PORT set
+lumos make:controller Widget            # + make:model/migration/seeder/resource/middleware
+```
+
+Commands that need your code — `migrate`, `migrate:rollback`,
+`migrate:status`, `db:seed`, `route:list` — run from the skeleton's own
+binary, pre-wired through `lumos_cli::AppContext`:
+
+```sh
+cargo run --bin cli -- route:list
+cargo run --bin cli -- migrate
+```
+
+`route:list` reads an explicit `RouteRegistry` you build next to each
+mount (axum routers can't be introspected, so raw axum routes stay
+invisible by design); the `#[controller]` macro's `route_entries()`
+keeps registry entries in sync with the routes it generates.
+
 ## Why each core dependency exists
 
 `lumos-core` holds 11 required dependencies (≤ 15 budget); each flag below adds its own:
@@ -160,7 +185,9 @@ Deliberately absent: `hyper`/`matchit` (via axum), `sqlx` (`rusticate`
 only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only),
 `password-hash`/`getrandom` (via argon2's re-exports), `cookie`
 (hand-rolled parsing), `bytes` (via axum's body API). `mime` joined in
-Phase 4 (`lumos-jsonapi` negotiation); so did no other new dependency.
+Phase 4 (`lumos-jsonapi` negotiation); Phase 5 added none (the CLI's
+arg parser is hand-rolled, and `chrono` was already in the tree for
+migration timestamps).
 
 ## Contracts
 

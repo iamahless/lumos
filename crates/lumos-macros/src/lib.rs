@@ -35,7 +35,8 @@ use syn::{parse_macro_input, spanned::Spanned, FnArg, ImplItem, Item};
 /// routes. Actions must take `&self`, must not be generic, and may be
 /// `async` or sync; their parameters are forwarded as axum extractors and
 /// their return values must implement `IntoResponse` (typically
-/// `Result<Response, AppError>`).
+/// `Result<Response, AppError>`). A `route_entries()` companion lists the
+/// same actions for `route:list` (register it under the mount prefix).
 ///
 /// Generated paths point at `::lumos` by default; crates using `lumos-core`
 /// directly pass `#[controller(crate = "lumos_core")]`.
@@ -214,6 +215,10 @@ fn expand_impl(crate_path: &syn::Path, input: syn::ItemImpl) -> TokenStream {
     }
 
     let mut mounts = Vec::new();
+    let mut entries = Vec::new();
+    // `Self`-free display name for actions ("UserController::index").
+    let self_ty = &input.self_ty;
+    let owner = quote!(#self_ty).to_string().replace(' ', "");
     for action in ACTIONS {
         let Some(found) = find_action(&input, action.method) else {
             continue;
@@ -230,11 +235,20 @@ fn expand_impl(crate_path: &syn::Path, input: syn::ItemImpl) -> TokenStream {
                 &argument_types,
                 is_async,
             ));
+            let method = verb.to_uppercase();
+            let path = action.path;
+            let name = format!("{}::{}", owner, action.method);
+            entries.push(quote! {
+                #crate_path::RouteEntry {
+                    method: #method.to_string(),
+                    path: #path.to_string(),
+                    action: #name.to_string(),
+                }
+            });
         }
     }
 
     let (impl_generics, _, where_clause) = input.generics.split_for_impl();
-    let self_ty = &input.self_ty;
     // `mut` only when mounts exist, so controllers without convention
     // methods (helpers + hand-written routes) compile warning-free.
     let mutability = if mounts.is_empty() {
@@ -261,6 +275,15 @@ fn expand_impl(crate_path: &syn::Path, input: syn::ItemImpl) -> TokenStream {
                 let #mutability __router = #crate_path::Router::new();
                 #(#mounts)*
                 __router
+            }
+
+            #[doc = "Lists this controller's routes (relative paths) for `route:list`."]
+            #[doc = ""]
+            #[doc = "Same actions as `routes()`: one entry per verb of every `pub`"]
+            #[doc = "convention method present on the impl. Register under a prefix"]
+            #[doc = "with `RouteRegistry::resource` next to the `routes!` mount."]
+            pub fn route_entries() -> Vec<#crate_path::RouteEntry> {
+                vec![#(#entries),*]
             }
         }
     }

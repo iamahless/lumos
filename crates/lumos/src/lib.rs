@@ -48,7 +48,7 @@ pub use lumos_core::{
     async_trait, created, delete, from_fn, get, json, no_content, ok, patch, post, put, redirect,
     see_other, serve, AppError, Application, Config, Container, ErrorDocument, ErrorObject,
     ErrorSource, Json, Log, MiddlewareRegistry, Next, Path, Query, Request, Response, Result,
-    Router, ServiceProvider, State, StatusCode, ValidationError,
+    RouteEntry, RouteRegistry, Router, ServiceProvider, State, StatusCode, ValidationError,
 };
 // Pinned escape hatches: framework-compatible upstream versions.
 pub use lumos_core::{axum, serde, tokio};

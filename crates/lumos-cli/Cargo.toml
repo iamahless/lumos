@@ -9,3 +9,11 @@ description = "Artisan-like developer CLI for Lumos: generators, migrations, dev
 [[bin]]
 name = "lumos"
 path = "src/main.rs"
+
+[dependencies]
+lumos-core.workspace = true
+rusticate.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

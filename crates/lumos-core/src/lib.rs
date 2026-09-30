@@ -44,6 +44,7 @@ pub mod extract;
 pub mod log;
 pub mod middleware;
 pub mod provider;
+pub mod registry;
 pub mod response;
 pub mod router;
 #[cfg(feature = "validation")]
@@ -70,6 +71,7 @@ pub use extract::{Json, Path, Query, State};
 pub use log::Log;
 pub use middleware::{from_fn, MiddlewareRegistry, Next, Request};
 pub use provider::{async_trait, ServiceProvider};
+pub use registry::{RouteEntry, RouteRegistry};
 pub use response::{created, json, no_content, ok, redirect, see_other, Response};
 pub use router::{delete, get, patch, post, put, serve, Router, StatusCode};
 #[cfg(feature = "validation")]

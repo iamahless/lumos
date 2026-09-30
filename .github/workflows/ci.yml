@@ -56,6 +56,27 @@ jobs:
       - run: cargo test -p lumos --features jsonapi
       - run: cargo test -p lumos --features jsonapi-lite --test jsonapi_path
 
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test -p lumos-cli
+      - run: cargo run -p lumos-cli --bin lumos -- --help
+      - name: generated skeleton compiles and lists routes
+        run: |
+          cargo run -p lumos-cli --bin lumos -- new skel --path /tmp/skel
+          python3 - "$GITHUB_WORKSPACE" <<'EOF'
+          import sys
+          root = sys.argv[1]
+          p = '/tmp/skel/Cargo.toml'
+          s = open(p).read()
+          s = s.replace('lumos = "0.1.0"', f'lumos = {{ path = "{root}/crates/lumos" }}')
+          s = s.replace('lumos-cli = "0.1.0"', f'lumos-cli = {{ path = "{root}/crates/lumos-cli" }}')
+          open(p, 'w').write(s)
+          EOF
+          cd /tmp/skel && cargo check --all-targets
+          cargo run -q --bin cli -- route:list
+
   features:
     runs-on: ubuntu-latest
     strategy:

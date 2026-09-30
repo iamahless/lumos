@@ -169,6 +169,12 @@ macro_rules! factory {
 /// `run` and target the transaction.
 #[async_trait]
 pub trait Seeder: Send + Sync {
+    /// Stable record name (defaults to the type path; override for prettier
+    /// `db:seed` output and `--seeder` filtering).
+    fn name(&self) -> String {
+        std::any::type_name::<Self>().to_string()
+    }
+
     /// Runs the seed operation against `db`.
     async fn run(&self, db: &DB) -> Result<()>;
 }
