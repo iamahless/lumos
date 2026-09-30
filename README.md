@@ -2,7 +2,7 @@
 
 A lightweight, MVC, batteries-included Rust web framework with an Eloquent-inspired ORM. Minimal by default, feature-flag driven, and JSON:API-capable — built so a Laravel/Lumen developer feels at home while the framework stays idiomatic Rust: no runtime reflection, no global mutable state, all magic at compile time via proc-macros.
 
-> **Status: Phase 3 — validation + auth + views.** On top of the Phase 2 Rusticate ORM: `Validated` request extractors (`validator` derive → `422` with per-field pointers), argon2 passwords + token sessions + the `CurrentUser` guard (`401`/`403` split), and Askama templates via the `View` responder — all in `lumos-core` behind `validation`/`auth`/`views`, re-exported from the facade. JSON:API, CLI, and the example app land in Phases 4–7.
+> **Status: Phase 4 — JSON:API.** On top of Phase 3: `Resource` trait + `JsonApiResource` derive, strict per-route negotiation (406/415 + `Vary`), full v1.1 documents (linkage, deduped `included`, sparse fieldsets, sort/filter/page, spec pagination links) behind `jsonapi` and the flat subset behind `jsonapi-lite` (mutually exclusive), with vnd error documents — all in `lumos-jsonapi`, re-exported from the facade. CLI, testing helpers, and the example app land in Phases 5–7.
 
 ## Quickstart
 
@@ -32,14 +32,15 @@ async fn main() -> lumos::Result<()> {
 | --------------- | ------------------------------------------------------------------------ |
 | `lumos`         | Facade: feature flags + curated re-exports. This is what apps depend on. |
 | `lumos-core`    | Kernel: router, HTTP, container, config, errors, middleware, providers.  |
-| `lumos-macros`  | Proc-macros (`#[controller]`, `Model`, `#[scopes]`; resources in Phase 4). |
+| `lumos-macros`  | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`).    |
 | `rusticate`     | Standalone ORM. Never depends on `lumos-core`.                            |
-| `lumos-jsonapi` | JSON:API serialization + negotiation (Phase 4).                          |
+| `lumos-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`).        |
 | `lumos-testing` | Test helpers (Phase 7).                                                  |
 | `lumos-cli`     | `lumos` developer binary (Phase 5).                                      |
 
 Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
-`lumos-jsonapi` → `{lumos-core, rusticate}` (the sole bridge);
+`lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred:
+sort/filter are structured values apps map onto queries themselves);
 `lumos-core` → nothing internal; `rusticate` → nothing internal.
 
 ## Feature flags
@@ -55,8 +56,8 @@ Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`;
 | `cache`        | no      | Cache drivers                                |
 | `queue`        | no      | Queue drivers (v0.2)                         |
 | `http-cache`   | no      | ETag / cache-control middleware              |
-| `jsonapi`      | no      | Full JSON:API v1.1 (Phase 4, implies `orm`)  |
-| `jsonapi-lite` | no      | Simplified JSON:API (Phase 4, implies `orm`) |
+| `jsonapi`      | no      | Full JSON:API v1.1 (implies `orm`)           |
+| `jsonapi-lite` | no      | Simplified JSON:API (implies `orm`)          |
 
 `jsonapi` + `jsonapi-lite` together is a compile error. Every flag
 compiles standalone; CI checks each flag, the all-safe set, and the
@@ -158,7 +159,8 @@ docs for the full tour.
 Deliberately absent: `hyper`/`matchit` (via axum), `sqlx` (`rusticate`
 only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only),
 `password-hash`/`getrandom` (via argon2's re-exports), `cookie`
-(hand-rolled parsing), `mime` + `bytes` (Phase 4 negotiation).
+(hand-rolled parsing), `bytes` (via axum's body API). `mime` joined in
+Phase 4 (`lumos-jsonapi` negotiation); so did no other new dependency.
 
 ## Contracts
 
@@ -166,7 +168,7 @@ only), `syn`/`quote`/`proc-macro2` (`lumos-macros` only),
 - `401` is unauthenticated, `403` is forbidden — never confused.
 - Every `201` carries a `Location` header (`created()` takes it as a required argument).
 - Every error renders the same `{ "errors": [...] }` document, JSON:API or not.
-- Models are never serialized directly (enforced by the Resource layer in Phase 4).
+- Models are never serialized directly (the `Resource` trait + `JsonApiResource` derive decide what clients see).
 - Escape hatches: raw axum (`lumos::axum`), raw tokio (`lumos::tokio`), `Application::into_router`, `MiddlewareRegistry`, and `routes!` all compose with hand-written code.
 
 ## Development

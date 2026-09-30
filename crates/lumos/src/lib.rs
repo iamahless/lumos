@@ -13,8 +13,8 @@
 //! | `cache`        | Cache drivers                                        |
 //! | `queue`        | Queue drivers (v0.2)                                 |
 //! | `http-cache`   | ETag / cache-control middleware                      |
-//! | `jsonapi`      | Full JSON:API v1.1 (Phase 4, implies `orm`)          |
-//! | `jsonapi-lite` | Simplified JSON:API (Phase 4, implies `orm`)         |
+//! | `jsonapi`      | Full JSON:API v1.1 (implies `orm`)                   |
+//! | `jsonapi-lite` | Simplified JSON:API (implies `orm`)                  |
 //!
 //! `jsonapi` and `jsonapi-lite` are mutually exclusive: enabling both is a
 //! compile error. API routes get JSON:API negotiation; web routes never do.
@@ -54,6 +54,7 @@ pub use lumos_core::{
 pub use lumos_core::{axum, serde, tokio};
 // Compile-time codegen.
 pub use lumos_macros::controller;
+pub use lumos_macros::JsonApiResource;
 
 // --- Opt-in features --------------------------------------------------------
 #[cfg(feature = "orm")]
@@ -71,3 +72,15 @@ pub use lumos_core::{Template, View};
 
 #[cfg(any(feature = "jsonapi", feature = "jsonapi-lite"))]
 pub use lumos_jsonapi;
+
+// JSON:API surface at root (either flag; renderers come from the active
+// one). `created` is the deliberate exception: core's plain-JSON `created`
+// already lives here, so the JSON:API one stays module-only at
+// `lumos_jsonapi::created`.
+#[cfg(any(feature = "jsonapi", feature = "jsonapi-lite"))]
+pub use lumos_jsonapi::{
+    collection, collection_memory, encode, memory_page, single, to_attribute, ApiQuery, ApiResult,
+    AttributeMap, DynResource, Filter, JsonApiBody, JsonApiError, NamedRelationship, Page,
+    PageLinks, RelationTarget, Relationship, Resource, SortField, ToMany, ToOne, DEFAULT_PAGE_SIZE,
+    JSON_API_MIME, MAX_BODY_BYTES, MAX_PAGE_SIZE,
+};

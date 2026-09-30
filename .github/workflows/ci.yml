@@ -21,6 +21,10 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo clippy -p lumos-core --features validation,auth,views --all-targets -- -D warnings
       - run: cargo clippy -p lumos --features validation,auth,views,orm --all-targets -- -D warnings
+      - run: cargo clippy -p lumos-jsonapi --features jsonapi --all-targets -- -D warnings
+      - run: cargo clippy -p lumos-jsonapi --features jsonapi-lite --all-targets -- -D warnings
+      - run: cargo clippy -p lumos --features jsonapi --all-targets -- -D warnings
+      - run: cargo clippy -p lumos --features jsonapi-lite --all-targets -- -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -42,6 +46,15 @@ jobs:
       - uses: actions/checkout@v4
       - run: cargo test -p lumos-core --features validation,auth,views
       - run: cargo test -p lumos --features auth,views
+
+  jsonapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo test -p lumos-jsonapi --features jsonapi
+      - run: cargo test -p lumos-jsonapi --features jsonapi-lite
+      - run: cargo test -p lumos --features jsonapi
+      - run: cargo test -p lumos --features jsonapi-lite --test jsonapi_path
 
   features:
     runs-on: ubuntu-latest

@@ -3,11 +3,12 @@
 //! All framework "magic" lives here, at compile time: there is no runtime
 //! reflection and no global state anywhere in Lumos.
 //!
-//! Phase 1 ships [`controller`]; Phase 2 adds [`Model`] and [`scopes`].
-//! `Validate`, `FormRequest`, `Migration`, and `JsonApiResource` arrive with
-//! their phases.
+//! Phase 1 ships [`controller`]; Phase 2 adds [`Model`] and [`scopes`];
+//! Phase 4 adds [`JsonApiResource`]. `Validate`, `FormRequest`, and
+//! `Migration` arrive with their phases.
 
 mod model;
+mod resource;
 mod scopes;
 
 use proc_macro::TokenStream;
@@ -405,6 +406,46 @@ fn mount_route(
 pub fn derive_model(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as syn::DeriveInput);
     model::expand(&parsed)
+        .unwrap_or_else(|error| error.to_compile_error())
+        .into()
+}
+
+/// Derives `lumos_jsonapi::Resource` from struct fields.
+///
+/// Container: `#[resource(type = "users")]` (required). Fields become
+/// attributes unless marked: `#[resource(id)]` (exactly one, rendered via
+/// `Display`, never an attribute), `#[resource(hidden)]` (attributes only),
+/// `#[resource(rename = "...")]` (attribute or relationship name override),
+/// `#[resource(relation)]` on `ToOne<T>` / `ToMany<T>` / `Option<ToOne<T>>`
+/// fields (relationship name defaults to the field name).
+///
+/// Generated paths use `::lumos::lumos_jsonapi` unconditionally: derive
+/// users go through the facade, which re-exports `lumos_jsonapi` under
+/// either `jsonapi` flag.
+///
+/// # Examples
+///
+/// ```ignore
+/// use lumos::{JsonApiResource, ToMany, ToOne};
+///
+/// #[derive(JsonApiResource)]
+/// #[resource(type = "articles")]
+/// pub struct Article {
+///     #[resource(id)]
+///     pub id: i64,
+///     pub title: String,
+///     #[resource(hidden)]
+///     pub internal_note: String,
+///     #[resource(relation)]
+///     pub author: ToOne<User>,
+///     #[resource(relation, rename = "reviewers")]
+///     pub reviewed_by: ToMany<User>,
+/// }
+/// ```
+#[proc_macro_derive(JsonApiResource, attributes(resource))]
+pub fn derive_json_api_resource(input: TokenStream) -> TokenStream {
+    let parsed = parse_macro_input!(input as syn::DeriveInput);
+    resource::expand(&parsed)
         .unwrap_or_else(|error| error.to_compile_error())
         .into()
 }
