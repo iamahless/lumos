@@ -126,13 +126,25 @@ jobs:
                         exit 1
                       fi
 
-                      rm -f "$failure_log"
                       if [[ "$attempt" -eq 5 ]]; then
+                        rm -f "$failure_log"
                         echo "crates.io rate limit persisted while publishing $package." >&2
                         exit 1
                       fi
 
-                      echo "crates.io rate limit reached; waiting 65 seconds before retrying $package."
-                      sleep 65
+                      retry_after="$(sed -n 's/.*Please try again after \(.*\) and see.*/\1/p' "$failure_log" | tail -n 1)"
+                      if [[ -n "$retry_after" ]] && retry_epoch="$(date --date="$retry_after" +%s 2>/dev/null)"; then
+                        now_epoch="$(date +%s)"
+                        wait_seconds=$((retry_epoch - now_epoch + 5))
+                        if ((wait_seconds < 65)); then
+                          wait_seconds=65
+                        fi
+                      else
+                        wait_seconds=65
+                      fi
+                      rm -f "$failure_log"
+
+                      echo "crates.io rate limit reached; waiting $wait_seconds seconds before retrying $package."
+                      sleep "$wait_seconds"
                     done
                   done

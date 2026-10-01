@@ -26,21 +26,21 @@ async fn main() -> lumos::Result<()> {
 }
 ```
 
-## Crates
+## Packages and Rust crates
 
-| Crate           | Role                                                                     |
-| --------------- | ------------------------------------------------------------------------ |
-| `lumos`         | Facade: feature flags + curated re-exports. This is what apps depend on. |
-| `lumos-rs-core` | Kernel: router, HTTP, container, config, errors, middleware, providers. |
-| `lumos-rs-macros` | Proc-macros (`#[controller]`, `Model`, `#[scopes]`, `JsonApiResource`). |
-| `lumos-rs-rusticate` | Standalone ORM. Never depends on `lumos-core`. |
-| `lumos-rs-jsonapi` | JSON:API serialization + negotiation (`jsonapi` / `jsonapi-lite`). |
-| `lumos-rs-testing` | Test helpers: `TestDb`, `TestClient`, response assertions. |
-| `lumos-rs-cli` | `lumos` dev CLI: `new` / `serve` / `make:*` + app-linked migrate/seed. |
+| Cargo package | Rust crate | Role |
+| --- | --- | --- |
+| [`lumos-rs`](https://crates.io/crates/lumos-rs) | `lumos` | Facade with feature selection and curated re-exports. Applications normally depend on this package. |
+| [`lumos-rs-core`](https://crates.io/crates/lumos-rs-core) | `lumos_core` | Kernel: router, HTTP, container, config, errors, middleware, and providers. |
+| [`lumos-rs-macros`](https://crates.io/crates/lumos-rs-macros) | `lumos_macros` | Proc macros: `#[controller]`, `Model`, `#[scopes]`, and `JsonApiResource`. |
+| [`lumos-rs-rusticate`](https://crates.io/crates/lumos-rs-rusticate) | `rusticate` | Standalone ORM with no dependency on `lumos-core`. |
+| [`lumos-rs-jsonapi`](https://crates.io/crates/lumos-rs-jsonapi) | `lumos_jsonapi` | JSON:API serialization and negotiation (`jsonapi` / `jsonapi-lite`). |
+| [`lumos-rs-testing`](https://crates.io/crates/lumos-rs-testing) | `lumos_testing` | Test helpers: `TestDb`, `TestClient`, and response assertions. |
+| [`lumos-rs-cli`](https://crates.io/crates/lumos-rs-cli) | `lumos_cli` | The `lumos` development CLI: `new`, `serve`, `make:*`, plus app-linked migrations and seeders. |
 
 Dependency direction: `lumos` → `{lumos-core, rusticate, lumos-jsonapi}`; `lumos-jsonapi` → `{lumos-core}` (a `rusticate` query bridge stays deferred: sort/filter are structured values apps map onto queries themselves); `lumos-cli` → `{lumos-core, rusticate}` (runtime glue; the parser and generators are dependency-free); `lumos-core` → nothing internal; `rusticate` → nothing internal.
 
-The crates.io packages use the `lumos-rs-*` names. They retain their short Rust library names, so applications install `lumos-rs` as the `lumos` dependency and continue to write `use lumos::...`.
+The crates.io packages use the `lumos-rs-*` names. The name to the left of `=` in `Cargo.toml` is the Rust import name, so applications install `lumos-rs` as `lumos` and continue to write `use lumos::...`.
 
 ## Documentation
 
@@ -57,7 +57,7 @@ The runnable [blog example](apps/blog/README.md) is the end-to-end reference app
 Use the release helper to update the workspace package version and every internal crate constraint together:
 
 ```sh
-scripts/prepare-release.sh 0.1.2
+scripts/prepare-release.sh <next-version>
 ```
 
 The script requires a clean worktree, updates `Cargo.toml` and `Cargo.lock`, validates the workspace, and prints the commit and tag commands. Review its changes before creating and pushing the release tag.
@@ -145,11 +145,13 @@ One implementation serves SQLite, Postgres, and MySQL (backend chosen from the c
 ## CLI in 30 seconds
 
 ```sh
-cargo install --path crates/lumos-cli   # ships the `lumos` binary
-lumos new blog && cd blog               # runnable API skeleton
-lumos serve --port 8080                 # cargo run with HOST/PORT set
-lumos make:controller Widget            # + make:model/migration/seeder/resource/middleware
+cargo install lumos-rs-cli
+lumos new blog && cd blog
+lumos serve --port 8080
+lumos make:controller Widget
 ```
+
+To run the CLI from a checkout while developing Lumos, use `cargo install --path crates/lumos-cli` instead.
 
 Commands that need your code, `migrate`, `migrate:rollback`, `migrate:status`, `db:seed`, and `route:list`, run from the skeleton's own binary, pre-wired through `lumos_cli::AppContext`:
 
