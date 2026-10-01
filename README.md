@@ -49,18 +49,19 @@ The reference guide expands on this overview:
 - [Framework architecture](docs/architecture.md) explains crate ownership, dependency direction, and extension boundaries.
 - [Building an application](docs/building-an-app.md) covers configuration, providers, controllers, routing, migrations, and the CLI.
 - [Data APIs and testing](docs/data-apis-and-testing.md) covers Rusticate, JSON:API, authentication, and in-process tests.
+- [Publishing a release](docs/releases.md) covers version preparation, crates.io ownership, workflow recovery, and release verification.
 
 The runnable [blog example](apps/blog/README.md) is the end-to-end reference application. Its HTTP test suite is the best source for concrete behavior at the protocol boundary.
 
 ## Preparing a release
 
-Use the release helper to update the workspace package version and every internal crate constraint together:
+Lumos `0.1.3` is published on crates.io. Use the release helper to prepare the next workspace version and every internal crate constraint together:
 
 ```sh
 scripts/prepare-release.sh <next-version>
 ```
 
-The script requires a clean worktree, updates `Cargo.toml` and `Cargo.lock`, validates the workspace, and prints the commit and tag commands. Review its changes before creating and pushing the release tag.
+The script requires a clean worktree, updates `Cargo.toml` and `Cargo.lock`, validates the workspace, and prints the commit and tag commands. [The release guide](docs/releases.md) also explains workflow prerequisites, partial-release recovery, and distribution verification.
 
 ## Feature flags
 
